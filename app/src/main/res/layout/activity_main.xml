@@ -13,12 +13,47 @@
         android:text="Jumlah Warna :"
         android:id="@+id/textViewTotalWarna" />
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:id="@+id/cameraImage"
-        android:layout_above="@+id/seekBar"
-        android:layout_centerHorizontal="true" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="300dp">
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="300dp"
+            android:layout_weight="1"
+            android:id="@+id/cameraImage" />
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="300dp"
+            android:layout_weight="1"
+            android:id="@+id/equalizedImage" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="30dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_weight="1"
+            android:text="Original Image"
+            android:gravity="center"
+            android:id="@+id/textView" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Equalized Image"
+            android:layout_weight="1"
+            android:id="@+id/textView2" />
+    </LinearLayout>
 
     <SeekBar
         android:layout_width="255dp"
