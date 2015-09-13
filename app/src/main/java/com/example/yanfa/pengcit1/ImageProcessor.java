@@ -246,8 +246,8 @@ public class ImageProcessor {
                 if(R == 0 && G == 0 && B == 0){
                     String tempString = getObject(image, new Point(i,j), new Point(i,j), true, getDirection(2));
                     chaineCodes.add(tempString);
+                    break;
                 }
-                break;
             }
         }
         return chaineCodes;

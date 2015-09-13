@@ -48,8 +48,6 @@ public class MainActivity extends ActionBarActivity {
         textViewTotalColor = (TextView)findViewById(R.id.textViewTotalWarna);
 
         pixelSeekBar = (SeekBar)findViewById(R.id.pixelSeekBar);
-        seekBar2 = (SeekBar)findViewById(R.id.seekBar2);
-
         cameraButton = (Button)findViewById(R.id.cameraButton);
 
         cameraButton.setOnClickListener(new View.OnClickListener() {
