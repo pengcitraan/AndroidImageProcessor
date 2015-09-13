@@ -1,8 +1,11 @@
 package com.example.yanfa.pengcit1;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -14,21 +17,29 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
 public class MainActivity extends ActionBarActivity {
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final int REQ_CODE_PICK_IMAGE = 2;
 
     private TextView textViewTotalColor;
     private ImageView cameraView;
     private ImageView equalizedView;
     private Button cameraButton;
+    private Button imagePickerButton;
     private SeekBar pixelSeekBar;
     private SeekBar seekBar2;
     private Bitmap currentImageBitmap;
     private Boolean pictureTaken;
+    private ImageProcessor imageProcessor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        imageProcessor = new ImageProcessor();
         pictureTaken = false;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -46,6 +57,14 @@ public class MainActivity extends ActionBarActivity {
             public void onClick(View v) {
                 dispatchTakePictureIntent();
                 //System.out.println("width : " + pixelSeekBar.getProgress());
+            }
+        });
+
+        imagePickerButton = (Button)findViewById(R.id.imageChooserButton);
+        imagePickerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickImage(v);
             }
         });
 
@@ -101,10 +120,35 @@ public class MainActivity extends ActionBarActivity {
             Bitmap tempBitmap = (Bitmap) extras.get("data");
             currentImageBitmap = ImageProcessor.toGrayscale(tempBitmap);
             //System.out.println("pixelnya : " + currentImageBitmap.getPixel(0, 0));
-            cameraView.setImageBitmap(currentImageBitmap);
+            cameraView.setImageBitmap(tempBitmap);
             equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0,0));
             textViewTotalColor.setText("Jumlah Warna : " + ImageProcessor.countTotalColor(currentImageBitmap));
             pictureTaken = true;
+        }
+        else if(requestCode == REQ_CODE_PICK_IMAGE && resultCode == RESULT_OK){
+            InputStream stream = null;
+            try {
+                // recyle unused bitmaps
+                if (currentImageBitmap != null) {
+                    currentImageBitmap.recycle();
+                }
+                stream = getContentResolver().openInputStream(data.getData());
+                currentImageBitmap = BitmapFactory.decodeStream(stream);
+
+                cameraView.setImageBitmap(currentImageBitmap);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                if (stream != null)
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            }
+            cameraView.setImageBitmap(currentImageBitmap);
+            equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0,0));
+            textViewTotalColor.setText("Chaine Codes : " + imageProcessor.getChaineCodes(currentImageBitmap).get(0));
         }
     }
 
@@ -113,5 +157,12 @@ public class MainActivity extends ActionBarActivity {
         if(takePictureIntent.resolveActivity(getPackageManager()) != null){
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
         }
+    }
+    private void pickImage(View View) {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent, REQ_CODE_PICK_IMAGE);
     }
 }
