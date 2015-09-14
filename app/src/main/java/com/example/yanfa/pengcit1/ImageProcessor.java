@@ -253,6 +253,32 @@ public class ImageProcessor {
         return chaineCodes;
     }
 
+    public int classifyChainCodes(Bitmap image, int indexChainCode){
+        String chainCode = getChaineCodes(image).get(indexChainCode);
+        List<String> chainCodeSplit = new ArrayList<String>();
+        chainCodeSplit = chainSplit(chainCode);
+        return 0;
+    }
+
+    List<String> chainCodeSplit = new ArrayList<String>();
+
+    public List<String> chainSplit(String chainCode){
+        if(chainCode.isEmpty()){
+            return chainCodeSplit;
+        }
+        else{
+            for (int i = 0; i < chainCode.length(); i++) {
+                if (chainCode.charAt(i - 1) != chainCode.charAt(i) || i == chainCode.length()) {
+                    String tempString = chainCode.split(String.valueOf(chainCode.charAt(i-1)), 2)[0];
+                    chainCodeSplit.add(tempString);
+                    String contString = chainCode.split(String.valueOf(chainCode.charAt(i-1)), 2)[1];
+                    chainCodeSplit.addAll(chainSplit(contString));
+                }
+            }
+        }
+        return chainCodeSplit;
+    }
+
     public String getObject(Bitmap image, Point curPos, Point initPos, Boolean start, int lastPos){
         if(curPos.getX() == initPos.getX() && curPos.getY() == initPos.getY() && !start){
             return "";
