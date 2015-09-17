@@ -1,14 +1,17 @@
 package com.example.yanfa.pengcit1;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +19,8 @@ import java.util.Map;
  * Created by yanfa on 9/6/2015.
  */
 public class ImageProcessor {
+
+    private List<String> chainCodeSplit = new ArrayList<String>();
 
     private static int[][] convertTo2DWithoutUsingGetRGB(Bitmap image) {
         int width = image.getWidth();
@@ -260,8 +265,7 @@ public class ImageProcessor {
         return 0;
     }
 
-    List<String> chainCodeSplit = new ArrayList<String>();
-
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     public List<String> chainSplit(String chainCode){
         if(chainCode.isEmpty()){
             return chainCodeSplit;
@@ -374,7 +378,7 @@ public class ImageProcessor {
         }
     }
 
-    private Boolean isBlack(Bitmap image, Point pos){
+    private boolean isBlack(Bitmap image, Point pos){
         int p = image.getPixel(pos.getX(),pos.getY());
         int R = (p & 0xff0000) >> 16;
         int G = (p & 0x00ff00) >> 8;
@@ -385,6 +389,72 @@ public class ImageProcessor {
         else{
             return false;
         }
+    }
+
+    public String getShape(String chaineCode){
+        boolean sigTurn = false; // buat aktifin kalo beloknya udah banget atau belom
+        int edgeSum = 0;
+        int curCode, lastCode; //buat cek nilai
+        int curDiff, lastDiff; //buat cek dia kearah mana geraknya
+
+        System.out.println("panjang chaine code : " + chaineCode.length());
+
+        String tempCode1 = chaineCode;
+        String tempCode2 = chaineCode;
+        lastCode = Integer.parseInt(tempCode1.substring(0,1));
+        lastDiff = Integer.parseInt(tempCode2.substring(1,2)) - lastCode;
+        for(int i = 1; i < chaineCode.length() + 2; i++){
+            if((i % chaineCode.length()) < ((i + 1) % chaineCode.length())) {
+                String tempCode = chaineCode;
+                System.out.println("posisi yang di parse : " + i % chaineCode.length() + "," + (i + 1) % chaineCode.length());
+                curCode = Integer.parseInt(tempCode.substring(i % chaineCode.length(), (i + 1) % chaineCode.length()));
+                curDiff = lastCode - curCode;
+
+                if (curDiff == 0 || curDiff % 7 == 0) {
+                } else if (lastDiff < 0) {
+                    if (curDiff != -1) {
+                        sigTurn = true;
+                    }
+                } else {
+                    if (curDiff != 1) {
+                        sigTurn = true;
+                    }
+                }
+                if (sigTurn) {
+                    edgeSum++;
+                    sigTurn = false;
+                }
+                lastCode = curCode;
+            }
+        }
+        if(edgeSum == 0){
+            return "circle";
+        }
+        else if(edgeSum == 3){
+
+        }
+        else if(edgeSum == 4){
+            boolean isSquare = true;
+            for(int i = 0; i < chaineCode.length()/4; i++){
+                tempCode1 = chaineCode;
+                tempCode2 = chaineCode;
+                if(!isInverseCode(tempCode1.substring(i,i+1),
+                        tempCode2.substring((chaineCode.length()/4)+i, (chaineCode.length()/4)+i+1))){
+                    isSquare = false;
+                }
+            }
+            if(isSquare){
+                return "square";
+            }
+            else{
+                return "rectangle";
+            }
+        }
+        return "not basic shape";
+    }
+
+    private boolean isInverseCode(String s1, String s2){
+        return getDirection(Integer.parseInt(s1)) == Integer.parseInt(s2);
     }
 
 }
