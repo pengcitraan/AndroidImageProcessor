@@ -255,20 +255,110 @@ public class ImageProcessor {
         return chaineCodes;
     }
 
-    public String detectPattern(String pattern){
-        switch (pattern){
-            case "22444444444444444444446600000000000000000000": return "1";
-            case "10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000": return "2";
-            case "1122222234444444446532444444444444566666677000000002224444444321100000007766002221000007765444466600000": return "3";
-            case "111211112111224444444443224665444600076666666666660": return "4";
-            case "22222222224444444666000076654444443222234344444444454566666670700000022244444432210000000007666666000000000000": return "5";
-            case "1122222234444466000766544444443122234344444444454566666677000000000000000000000": return "6";
-            case "22222222445444454444544445444454466601000010001000010000107666600": return "7";
-            case "112222223344444445653243444444444556666667700000000001217670000000": return "8";
-            case "112222223434444444444444444444545666666707000222444322100000007566660700000000000": return "9";
-            case "11222222343444444444444444444454566666677000000000000000000000": return "0";
-            default : return "Unrecognized";
+    public String getNumber (String pattern){
+        String[] numbers = new String[10];
+        numbers[1] = new String("22444444444444444444446600000000000000000000");
+        numbers[2] = new String("10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000");
+        numbers[3] = new String("1122222234444444446532444444444444566666677000000002224444444321100000007766002221000007765444466600000");
+        numbers[4] = new String ("111211112111224444444443224665444600076666666666660");
+        numbers[5] = new String ("22222222224444444666000076654444443222234344444444454566666670700000022244444432210000000007666666000000000000");
+        numbers[6] = new String ("1122222234444466000766544444443122234344444444454566666677000000000000000000000");
+        numbers[7] = new String ("22222222445444454444544445444454466601000010001000010000107666600");
+        numbers[8] = new String ("112222223344444445653243444444444556666667700000000001217670000000");
+        numbers[9] = new String ("112222223434444444444444444444545666666707000222444322100000007566660700000000000");
+        numbers[0] = new String ("11222222343444444444444444444454566666677000000000000000000000");
+
+        int minVal = 10000;
+        int minIdx = 10;
+        for (int i = 0; i < numbers.length; i++){
+            int val = getDistance(pattern, numbers[i]);
+            int idx = i;
+            if (minVal >  val){
+                minVal = val;
+                minIdx = i;
+            }
         }
+
+        String result = new String(""+ minIdx);
+        return result;
+    }
+
+    public int getDistance (String pattern, String number){
+        int factor;
+        String sNumber = new String("");
+        int value;
+
+        if (pattern.length() > number.length()){
+            factor  = pattern.length() / number.length();
+        } else {
+            factor = 1;
+        }
+//        System.out.println("Factor " + factor);
+        for (int i = 0; i < number.length(); i++){
+            String temp = new String (""+ number.charAt(i));
+//            System.out.println("Temp: " + temp);
+            for (int j = 0; j < factor ; j++){
+                sNumber += temp;
+//                System.out.println("Stretch Number: " + sNumber);
+            }
+        }
+
+        System.out.println("Pattern: " + pattern);
+        System.out.println("Pattern length: " + pattern.length());
+        System.out.println("Number: " + number);
+        System.out.println("Number length: " + number.length());
+        System.out.println("Stretch Number: " + sNumber);
+        System.out.println("Stretch Number length: " + sNumber.length());
+
+
+        value = editDistance(sNumber, pattern);
+        System.out.println("Difference Value: " + value + "\n\n");
+        return  value;
+    }
+
+    public static int editDistance(String s1, String s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+
+        int[] costs = new int[s2.length() + 1];
+        for (int i = 0; i <= s1.length(); i++) {
+            int lastValue = i;
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0)
+                    costs[j] = j;
+                else {
+                    if (j > 0) {
+                        int newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue),
+                                    costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0)
+                costs[s2.length()] = lastValue;
+        }
+        return costs[s2.length()];
+    }
+
+    public String detectPattern(String pattern){
+//        switch (pattern){
+//            case "22444444444444444444446600000000000000000000": return "1";
+//            case "10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000": return "2";
+//            case "1122222234444444446532444444444444566666677000000002224444444321100000007766002221000007765444466600000": return "3";
+//            case "111211112111224444444443224665444600076666666666660": return "4";
+//            case "22222222224444444666000076654444443222234344444444454566666670700000022244444432210000000007666666000000000000": return "5";
+//            case "1122222234444466000766544444443122234344444444454566666677000000000000000000000": return "6";
+//            case "22222222445444454444544445444454466601000010001000010000107666600": return "7";
+//            case "112222223344444445653243444444444556666667700000000001217670000000": return "8";
+//            case "112222223434444444444444444444545666666707000222444322100000007566660700000000000": return "9";
+//            case "11222222343444444444444444444454566666677000000000000000000000": return "0";
+//            default : return "Unrecognized";
+//        }
+
+        return getNumber(pattern);
     }
 
     public void removeObject(Bitmap image, int i, int j){
