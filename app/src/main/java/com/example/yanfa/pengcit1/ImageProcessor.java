@@ -1,17 +1,14 @@
 package com.example.yanfa.pengcit1;
 
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
-import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +16,6 @@ import java.util.Map;
  * Created by yanfa on 9/6/2015.
  */
 public class ImageProcessor {
-
-    private List<String> chainCodeSplit = new ArrayList<String>();
 
     private static int[][] convertTo2DWithoutUsingGetRGB(Bitmap image) {
         int width = image.getWidth();
@@ -251,6 +246,8 @@ public class ImageProcessor {
                 if(R == 0 && G == 0 && B == 0){
                     String tempString = getObject(image, new Point(i,j), new Point(i,j), true, getDirection(2));
                     chaineCodes.add(tempString);
+                    System.out.println("Indeks: " + i + ',' + j);
+                    removeObject(image, i, j);
                     break;
                 }
             }
@@ -258,29 +255,34 @@ public class ImageProcessor {
         return chaineCodes;
     }
 
-    public int classifyChainCodes(Bitmap image, int indexChainCode){
-        String chainCode = getChaineCodes(image).get(indexChainCode);
-        List<String> chainCodeSplit = new ArrayList<String>();
-        chainCodeSplit = chainSplit(chainCode);
-        return 0;
+    public String detectPattern(String pattern){
+        switch (pattern){
+            case "22444444444444444444446600000000000000000000": return "1";
+            case "10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000": return "2";
+            case "1122222234444444446532444444444444566666677000000002224444444321100000007766002221000007765444466600000": return "3";
+            case "111211112111224444444443224665444600076666666666660": return "4";
+            case "22222222224444444666000076654444443222234344444444454566666670700000022244444432210000000007666666000000000000": return "5";
+            case "1122222234444466000766544444443122234344444444454566666677000000000000000000000": return "6";
+            case "22222222445444454444544445444454466601000010001000010000107666600": return "7";
+            case "112222223344444445653243444444444556666667700000000001217670000000": return "8";
+            case "112222223434444444444444444444545666666707000222444322100000007566660700000000000": return "9";
+            case "11222222343444444444444444444454566666677000000000000000000000": return "0";
+            default : return "Unrecognized";
+        }
     }
 
-    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
-    public List<String> chainSplit(String chainCode){
-        if(chainCode.isEmpty()){
-            return chainCodeSplit;
+    public void removeObject(Bitmap image, int i, int j){
+        if(image.getPixel(i,j) > 0){
+            image.setPixel(i, j, 0);
+            removeObject(image, i, j+1);
+            removeObject(image, i, j-1);
+            removeObject(image, i+1, j);
+            removeObject(image, i-1, j);
+            removeObject(image, i+1, j+1);
+            removeObject(image, i+1, j-1);
+            removeObject(image, i-1, j+1);
+            removeObject(image, i-1, j-1);
         }
-        else{
-            for (int i = 0; i < chainCode.length(); i++) {
-                if (chainCode.charAt(i - 1) != chainCode.charAt(i) || i == chainCode.length()) {
-                    String tempString = chainCode.split(String.valueOf(chainCode.charAt(i-1)), 2)[0];
-                    chainCodeSplit.add(tempString);
-                    String contString = chainCode.split(String.valueOf(chainCode.charAt(i-1)), 2)[1];
-                    chainCodeSplit.addAll(chainSplit(contString));
-                }
-            }
-        }
-        return chainCodeSplit;
     }
 
     public String getObject(Bitmap image, Point curPos, Point initPos, Boolean start, int lastPos){
@@ -378,7 +380,7 @@ public class ImageProcessor {
         }
     }
 
-    private boolean isBlack(Bitmap image, Point pos){
+    private Boolean isBlack(Bitmap image, Point pos){
         int p = image.getPixel(pos.getX(),pos.getY());
         int R = (p & 0xff0000) >> 16;
         int G = (p & 0x00ff00) >> 8;
@@ -389,72 +391,6 @@ public class ImageProcessor {
         else{
             return false;
         }
-    }
-
-    public String getShape(String chaineCode){
-        boolean sigTurn = false; // buat aktifin kalo beloknya udah banget atau belom
-        int edgeSum = 0;
-        int curCode, lastCode; //buat cek nilai
-        int curDiff, lastDiff; //buat cek dia kearah mana geraknya
-
-        System.out.println("panjang chaine code : " + chaineCode.length());
-
-        String tempCode1 = chaineCode;
-        String tempCode2 = chaineCode;
-        lastCode = Integer.parseInt(tempCode1.substring(0,1));
-        lastDiff = Integer.parseInt(tempCode2.substring(1,2)) - lastCode;
-        for(int i = 1; i < chaineCode.length() + 2; i++){
-            if((i % chaineCode.length()) < ((i + 1) % chaineCode.length())) {
-                String tempCode = chaineCode;
-                System.out.println("posisi yang di parse : " + i % chaineCode.length() + "," + (i + 1) % chaineCode.length());
-                curCode = Integer.parseInt(tempCode.substring(i % chaineCode.length(), (i + 1) % chaineCode.length()));
-                curDiff = lastCode - curCode;
-
-                if (curDiff == 0 || curDiff % 7 == 0) {
-                } else if (lastDiff < 0) {
-                    if (curDiff != -1) {
-                        sigTurn = true;
-                    }
-                } else {
-                    if (curDiff != 1) {
-                        sigTurn = true;
-                    }
-                }
-                if (sigTurn) {
-                    edgeSum++;
-                    sigTurn = false;
-                }
-                lastCode = curCode;
-            }
-        }
-        if(edgeSum == 0){
-            return "circle";
-        }
-        else if(edgeSum == 3){
-
-        }
-        else if(edgeSum == 4){
-            boolean isSquare = true;
-            for(int i = 0; i < chaineCode.length()/4; i++){
-                tempCode1 = chaineCode;
-                tempCode2 = chaineCode;
-                if(!isInverseCode(tempCode1.substring(i,i+1),
-                        tempCode2.substring((chaineCode.length()/4)+i, (chaineCode.length()/4)+i+1))){
-                    isSquare = false;
-                }
-            }
-            if(isSquare){
-                return "square";
-            }
-            else{
-                return "rectangle";
-            }
-        }
-        return "not basic shape";
-    }
-
-    private boolean isInverseCode(String s1, String s2){
-        return getDirection(Integer.parseInt(s1)) == Integer.parseInt(s2);
     }
 
 }

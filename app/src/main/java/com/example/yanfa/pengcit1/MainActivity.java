@@ -25,14 +25,12 @@ public class MainActivity extends ActionBarActivity {
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int REQ_CODE_PICK_IMAGE = 2;
-    static final int REQ_CODE_PICK_IMAGE_SHAPE = 3;
 
     private TextView textViewTotalColor;
-    private TextView shapeTextView;
     private ImageView cameraView;
+    private ImageView equalizedView;
     private Button cameraButton;
     private Button imagePickerButton;
-    private Button shapeButton;
     private SeekBar pixelSeekBar;
     private SeekBar seekBar2;
     private Bitmap currentImageBitmap;
@@ -46,8 +44,8 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cameraView = (ImageView)findViewById(R.id.cameraImage);
+        equalizedView = (ImageView)findViewById(R.id.equalizedImage);
         textViewTotalColor = (TextView)findViewById(R.id.textViewTotalWarna);
-        shapeTextView = (TextView)findViewById(R.id.shapeTextView);
 
         pixelSeekBar = (SeekBar)findViewById(R.id.pixelSeekBar);
         cameraButton = (Button)findViewById(R.id.cameraButton);
@@ -68,14 +66,6 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        shapeButton = (Button)findViewById(R.id.shapeButton);
-        shapeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                pickImageShape(v);
-            }
-        });
-
         pixelSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -83,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
                     System.out.println("masuk kok");
                     int progressChange = (int) (seekBar.getProgress() * 1000000);
                     int progressChange2 = (int) (seekBar2.getProgress() * 1000000);
+                    equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap, progressChange, progressChange2));
                 }
             }
 
@@ -128,6 +119,7 @@ public class MainActivity extends ActionBarActivity {
             currentImageBitmap = ImageProcessor.toGrayscale(tempBitmap);
             //System.out.println("pixelnya : " + currentImageBitmap.getPixel(0, 0));
             cameraView.setImageBitmap(tempBitmap);
+            equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0,0));
             textViewTotalColor.setText("Jumlah Warna : " + ImageProcessor.countTotalColor(currentImageBitmap));
             pictureTaken = true;
         }
@@ -153,32 +145,8 @@ public class MainActivity extends ActionBarActivity {
                     }
             }
             cameraView.setImageBitmap(currentImageBitmap);
-            textViewTotalColor.setText("Chaine Codes : " + imageProcessor.getChaineCodes(currentImageBitmap).get(0));
-        }
-        else if(requestCode == REQ_CODE_PICK_IMAGE_SHAPE && resultCode == RESULT_OK){
-            InputStream stream = null;
-            try {
-                // recyle unused bitmaps
-                if (currentImageBitmap != null) {
-                    currentImageBitmap.recycle();
-                }
-                stream = getContentResolver().openInputStream(data.getData());
-                currentImageBitmap = BitmapFactory.decodeStream(stream);
-
-                cameraView.setImageBitmap(currentImageBitmap);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } finally {
-                if (stream != null)
-                    try {
-                        stream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-            }
-            cameraView.setImageBitmap(currentImageBitmap);
-            shapeTextView.setText("Shape : " + imageProcessor.getShape(
-                    imageProcessor.getChaineCodes(currentImageBitmap).get(0)));
+            textViewTotalColor.setText("Digit : " + imageProcessor.detectPattern(imageProcessor.getChaineCodes(currentImageBitmap).get(0)));
+            System.out.println("Current: " + imageProcessor.getChaineCodes(currentImageBitmap).get(0));
         }
     }
 
@@ -194,12 +162,5 @@ public class MainActivity extends ActionBarActivity {
         intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         startActivityForResult(intent, REQ_CODE_PICK_IMAGE);
-    }
-    private void pickImageShape(View View) {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(intent, REQ_CODE_PICK_IMAGE_SHAPE);
     }
 }
