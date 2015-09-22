@@ -145,8 +145,8 @@ public class MainActivity extends ActionBarActivity {
                     }
             }
             cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-            //textViewTotalColor.setText("Digit : " + imageProcessor.detectPattern(imageProcessor.getChaineCodes(imageProcessor.toGrayscale(currentImageBitmap)).get(0)));
-            //equalizedView.setImageBitmap(imageProcessor.getCurrent_image());
+            // textViewTotalColor.setText("Digit : " + imageProcessor.detectPattern(imageProcessor.getChaineCodes(currentImageBitmap).get(0)));
+            equalizedView.setImageBitmap(imageProcessor.toGrayscale(currentImageBitmap, 0));
             //System.out.println("Current: " + imageProcessor.getChaineCodes(currentImageBitmap).get(0));
         }
     }

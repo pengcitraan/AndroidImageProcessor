@@ -89,7 +89,7 @@ public class ImageProcessor {
         return bmpGrayscale;
     }
 
-    public static Bitmap toGrayscale(Bitmap bmpOriginal, int threshold){
+    public static Bitmap toGrayscale(Bitmap bmpOriginal, float threshold){
         int width, height;
         height = bmpOriginal.getHeight();
         width = bmpOriginal.getWidth();
@@ -102,7 +102,71 @@ public class ImageProcessor {
         ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
         paint.setColorFilter(f);
         c.drawBitmap(bmpOriginal, 0, 0, paint);
+
+        threshold = ImageProcessor.otsuThresholder(toGrayscale(bmpOriginal))/new Float(256);
+        System.out.println("Threshold: " + threshold);
+        for(int i = 0; i < bmpGrayscale.getWidth(); i++){
+            for(int j = 0; j < bmpGrayscale.getHeight(); j++){
+                if(bmpGrayscale.getPixel(i, j) < (Color.BLACK)*threshold){
+                    bmpGrayscale.setPixel(i, j, Color.WHITE);
+                }
+                else{
+                    bmpGrayscale.setPixel(i, j, Color.BLACK);
+                }
+            }
+        }
+
         return bmpGrayscale;
+    }
+
+    /*
+    * @param Grayscaled image
+    * */
+    public static int otsuThresholder(Bitmap bmpGrayscale){
+        int histogram[] = new int[256];
+        for (int i = 0; i < bmpGrayscale.getWidth(); i++){
+            for (int j = 0; j < bmpGrayscale.getHeight(); j++){
+                int p = bmpGrayscale.getPixel(i, j);
+                int R = (p & 0xff0000) >> 16;
+                histogram[R] += 1;
+            }
+        }
+
+        int total = bmpGrayscale.getWidth() * bmpGrayscale.getHeight();
+
+        float sum = 0;
+        for(int t = 0; t < 256; t++) sum += t * histogram[t];
+
+        float sumB = 0;
+        int wB = 0;
+        int wF = 0;
+
+        float varMax = 0;
+        int threshold = 0;
+
+        for (int t=0 ; t<256 ; t++) {
+            wB += histogram[t];               // Weight Background
+            if (wB == 0) continue;
+
+            wF = total - wB;                 // Weight Foreground
+            if (wF == 0) break;
+
+            sumB += (float) (t * histogram[t]);
+
+            float mB = sumB / wB;            // Mean Background
+            float mF = (sum - sumB) / wF;    // Mean Foreground
+
+            // Calculate Between Class Variance
+            float varBetween = (float)wB * (float)wF * (mB - mF) * (mB - mF);
+
+            // Check if new maximum found
+            if (varBetween > varMax) {
+                varMax = varBetween;
+                threshold = t;
+            }
+        }
+
+        return  threshold;
     }
 
     public static Bitmap histogramEqualization(Bitmap bitmap, int adjustRed, int adjustCuf){
@@ -272,7 +336,7 @@ public class ImageProcessor {
                     //String tempString = getObject(image, new Point(i,j), new Point(i,j), true, getDirection(2));
                     chaineCodes.add("111");
                     //System.out.println("Indeks: " + i + ',' + j);
-                    removeObject(i, j);
+                    // removeObject(i, j);
                 }
             }
         }
@@ -370,20 +434,6 @@ public class ImageProcessor {
     }
 
     public String detectPattern(String pattern){
-//        switch (pattern){
-//            case "22444444444444444444446600000000000000000000": return "1";
-//            case "10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000": return "2";
-//            case "1122222234444444446532444444444444566666677000000002224444444321100000007766002221000007765444466600000": return "3";
-//            case "111211112111224444444443224665444600076666666666660": return "4";
-//            case "22222222224444444666000076654444443222234344444444454566666670700000022244444432210000000007666666000000000000": return "5";
-//            case "1122222234444466000766544444443122234344444444454566666677000000000000000000000": return "6";
-//            case "22222222445444454444544445444454466601000010001000010000107666600": return "7";
-//            case "112222223344444445653243444444444556666667700000000001217670000000": return "8";
-//            case "112222223434444444444444444444545666666707000222444322100000007566660700000000000": return "9";
-//            case "11222222343444444444444444444454566666677000000000000000000000": return "0";
-//            default : return "Unrecognized";
-//        }
-
         return getNumber(pattern);
     }
 
