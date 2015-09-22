@@ -7,15 +7,20 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 /**
  * Created by yanfa on 9/6/2015.
  */
 public class ImageProcessor {
+
+    private Bitmap current_image;
+    private boolean[][] mark;
 
     private static int[][] convertTo2DWithoutUsingGetRGB(Bitmap image) {
         int width = image.getWidth();
@@ -69,6 +74,22 @@ public class ImageProcessor {
     }
 
     public static Bitmap toGrayscale(Bitmap bmpOriginal){
+        int width, height;
+        height = bmpOriginal.getHeight();
+        width = bmpOriginal.getWidth();
+
+        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmpGrayscale);
+        Paint paint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(0);
+        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+        paint.setColorFilter(f);
+        c.drawBitmap(bmpOriginal, 0, 0, paint);
+        return bmpGrayscale;
+    }
+
+    public static Bitmap toGrayscale(Bitmap bmpOriginal, int threshold){
         int width, height;
         height = bmpOriginal.getHeight();
         width = bmpOriginal.getWidth();
@@ -237,6 +258,9 @@ public class ImageProcessor {
         int imageHeight = image.getHeight();
         int imageWidth = image.getWidth();
 
+        // Supaya bisa dihapus nantinya pake floodfill
+        current_image = image;
+        mark = new boolean[imageWidth][imageHeight];
         for(int i = 0; i < imageWidth; i++){
             for(int j = 0; j < imageHeight; j++){
                 int p = image.getPixel(i,j);
@@ -244,16 +268,17 @@ public class ImageProcessor {
                 int G = (p & 0x00ff00) >> 8;
                 int B = (p & 0x0000ff) >> 0;
                 if(R == 0 && G == 0 && B == 0){
-                    String tempString = getObject(image, new Point(i,j), new Point(i,j), true, getDirection(2));
-                    chaineCodes.add(tempString);
-                    System.out.println("Indeks: " + i + ',' + j);
-                    removeObject(image, i, j);
-                    break;
+                    System.out.println("Nilai p: " + p);
+                    //String tempString = getObject(image, new Point(i,j), new Point(i,j), true, getDirection(2));
+                    chaineCodes.add("111");
+                    //System.out.println("Indeks: " + i + ',' + j);
+                    removeObject(i, j);
                 }
             }
         }
         return chaineCodes;
     }
+
 
     public String getNumber (String pattern){
         String[] numbers = new String[10];
@@ -301,6 +326,7 @@ public class ImageProcessor {
                 sNumber += temp;
 //                System.out.println("Stretch Number: " + sNumber);
             }
+
         }
 
         System.out.println("Pattern: " + pattern);
@@ -361,18 +387,37 @@ public class ImageProcessor {
         return getNumber(pattern);
     }
 
-    public void removeObject(Bitmap image, int i, int j){
-        if(image.getPixel(i,j) > 0){
-            image.setPixel(i, j, 0);
-            removeObject(image, i, j+1);
-            removeObject(image, i, j-1);
-            removeObject(image, i+1, j);
-            removeObject(image, i-1, j);
-            removeObject(image, i+1, j+1);
-            removeObject(image, i+1, j-1);
-            removeObject(image, i-1, j+1);
-            removeObject(image, i-1, j-1);
+    public void removeObject(int i, int j){
+        Point node = new Point(i, j);
+        Queue<Point> Q = new ArrayDeque<Point>();
+        Q.add(node);
+        while (Q.size() > 0){
+            Point n = Q.poll();
+            i = n.getX();
+            j = n.getY();
+            if(i < 0 || i >= current_image.getWidth() || j < 0 || j >= current_image.getHeight() || mark[i][j]){
+                // do nothing
+                // System.out.println("Do nothing on " + i + ',' + j);
+            }
+            else {
+                if (isBlack(current_image, n)) {
+                    current_image.setPixel(i, j, Color.WHITE);
+                    mark[i][j] = true;
+                    Q.add(new Point(i + 1, j));
+                    Q.add(new Point(i - 1, j));
+                    Q.add(new Point(i, j + 1));
+                    Q.add(new Point(i, j - 1));
+                    Q.add(new Point(i + 1, j + 1));
+                    Q.add(new Point(i - 1, j + 1));
+                    Q.add(new Point(i - 1, j - 1));
+                    Q.add(new Point(i + 1, j - 1));
+                }
+            }
         }
+    }
+
+    public Bitmap getCurrent_image(){
+        return current_image;
     }
 
     public String getObject(Bitmap image, Point curPos, Point initPos, Boolean start, int lastPos){
