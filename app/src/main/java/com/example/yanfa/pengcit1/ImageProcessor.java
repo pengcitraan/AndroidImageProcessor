@@ -357,6 +357,7 @@ public class ImageProcessor {
         numbers[9] = new String ("112222223434444444444444444444545666666707000222444322100000007566660700000000000");
         numbers[0] = new String ("11222222343444444444444444444454566666677000000000000000000000");
 
+
         int minVal = 10000;
         int minIdx = 10;
         for (int i = 0; i < numbers.length; i++){
@@ -394,15 +395,15 @@ public class ImageProcessor {
         }
 
         System.out.println("Pattern: " + pattern);
-        System.out.println("Pattern length: " + pattern.length());
-        System.out.println("Number: " + number);
-        System.out.println("Number length: " + number.length());
-        System.out.println("Stretch Number: " + sNumber);
-        System.out.println("Stretch Number length: " + sNumber.length());
+//        System.out.println("Pattern length: " + pattern.length());
+//        System.out.println("Number: " + number);
+//        System.out.println("Number length: " + number.length());
+//        System.out.println("Stretch Number: " + sNumber);
+//        System.out.println("Stretch Number length: " + sNumber.length());
 
 
         value = editDistance(sNumber, pattern);
-        System.out.println("Difference Value: " + value + "\n\n");
+//        System.out.println("Difference Value: " + value + "\n\n");
         return  value;
     }
 
