@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.util.Log;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ public class ImageProcessor {
         return bmpGrayscale;
     }
 
-    public static Bitmap toGrayscale(Bitmap bmpOriginal, float threshold){
+    public static Bitmap toGrayscale(Bitmap bmpOriginal, float threshold) {
         int width, height;
         height = bmpOriginal.getHeight();
         width = bmpOriginal.getWidth();
@@ -103,14 +104,13 @@ public class ImageProcessor {
         paint.setColorFilter(f);
         c.drawBitmap(bmpOriginal, 0, 0, paint);
 
-        threshold = ImageProcessor.otsuThresholder(toGrayscale(bmpOriginal))/new Float(256);
+        threshold = ImageProcessor.otsuThresholder(toGrayscale(bmpOriginal)) / new Float(256) - new Float(0.2);
         System.out.println("Threshold: " + threshold);
-        for(int i = 0; i < bmpGrayscale.getWidth(); i++){
-            for(int j = 0; j < bmpGrayscale.getHeight(); j++){
-                if(bmpGrayscale.getPixel(i, j) < (Color.BLACK)*threshold){
+        for (int i = 0; i < bmpGrayscale.getWidth(); i++) {
+            for (int j = 0; j < bmpGrayscale.getHeight(); j++) {
+                if (bmpGrayscale.getPixel(i, j) < (Color.BLACK) * threshold) {
                     bmpGrayscale.setPixel(i, j, Color.WHITE);
-                }
-                else{
+                } else {
                     bmpGrayscale.setPixel(i, j, Color.BLACK);
                 }
             }
@@ -327,25 +327,23 @@ public class ImageProcessor {
         mark = new boolean[imageWidth][imageHeight];
         for(int i = 0; i < imageWidth; i++){
             for(int j = 0; j < imageHeight; j++){
-                int p = image.getPixel(i,j);
+                int p = current_image.getPixel(i,j);
                 int R = (p & 0xff0000) >> 16;
                 int G = (p & 0x00ff00) >> 8;
                 int B = (p & 0x0000ff) >> 0;
                 if(R == 0 && G == 0 && B == 0){
-                    System.out.println("Nilai p: " + p);
-                    //String tempString = getObject(image, new Point(i,j), new Point(i,j), true, getDirection(2));
-                    chaineCodes.add("111");
-                    //System.out.println("Indeks: " + i + ',' + j);
-                    // removeObject(i, j);
+                    String tempString = getObject2(current_image, new Point(i, j), getDirection(2));
+                    chaineCodes.add(tempString);
+                    removeObject(i, j);
                 }
             }
         }
+        current_image = image;
         return chaineCodes;
     }
 
-
     public String getNumber (String pattern){
-        String[] numbers = new String[10];
+        String[] numbers = new String[30];
         numbers[1] = new String("22444444444444444444446600000000000000000000");
         numbers[2] = new String("10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000");
         numbers[3] = new String("1122222234444444446532444444444444566666677000000002224444444321100000007766002221000007765444466600000");
@@ -356,6 +354,26 @@ public class ImageProcessor {
         numbers[8] = new String ("112222223344444445653243444444444556666667700000000001217670000000");
         numbers[9] = new String ("112222223434444444444444444444545666666707000222444322100000007566660700000000000");
         numbers[0] = new String ("11222222343444444444444444444454566666677000000000000000000000");
+        numbers[11] = new String("21111111101110110110101211222323356555454545454544545444544544454444454444444344667676700000100001000100100010010100755555555556600");
+        numbers[12] = new String("100122222222111211111111111101111011010010000007766666566566556556554543446777707001112112112121212212212223243321224344444444445454554555555555555565555556532223222223222322322322323344445467076766766676667666667666666666665545667700000");
+        numbers[13] = new String("223322322222122122121221211212111211111111101000777676766766666666656670000002112212112121111111100776666566565565555545707700102112121122121221222333333434445555565565565565532322223223223233234454434444545455555655556555656556565656566656666667677777700");
+        numbers[14] = new String ("121111111111011110110101100707712111011011011223234454545454545455455455455455545555545554322222222222222222221010010001001001001010010122225455445454445445445444454322211124443444566666666545444544445444434667677000100001000107666666666666666666666654667700000");
+        numbers[15] = new String ("223232222121211121112111111111011111011010110100100100007776666656566565565655555670707070100101010010010010007070012222222322222223222222222211134344444456667666667666666766666665454545445454454454312121212121221221222232343232333444454454544545545455455545555545555555655556555656565666767777700");
+        numbers[16] = new String ("1000000100010001001001001010100101101010111011101111121212223233233467665666556554555545554545545454545445454454454445444445444444444443333222221211111111010110101010100100100007766566566565655656600211211212121212223233232344444544454454545454554554555555556566666676666766767770000000000");
+        numbers[17] = new String ("101011010101101010110101101011010110101101011010110101101011767666666667666566666565555455600010001001001122222222322222222222322222112223444444565545545545454554545454545545454545454545454545454545454544545445445444467770707000");
+        numbers[18] = new String ("10110111111112111121111211777770707000000100100110111111112112223233346766656555555455454544544444343332211111111110111101101000077700223323334344445455555555565555565555433323332333434344444544554555555565565656565666566666676707776777770000");
+        numbers[19] = new String ("222232212211211111101110110110101101010101010100101001001000100001000000070776766665655555555555455454545454454445434322221212121212112124555555555565656667676767660700000100100101010110101110111111112121222231223223232323434444445444454445445445445445454454545454545454554545545545545555555556656667676777600");
+        numbers[10] = new String ("1000010010010010101010110110111122232232222122222232434444444444454444454445444544544545454545555565666666676667676777670700000000");
+       numbers[21] = new String("21111111101110110110101211222323356555454545454544545444544544454444454444444344667676700000100001000100100010010100755555555556600");
+        numbers[22] = new String("100122222222111211111111111101111011010010000007766666566566556556554543446777707001112112112121212212212223243321224344444444445454554555555555555565555556532223222223222322322322323344445467076766766676667666667666666666665545667700000");
+        numbers[23] = new String("223322322222122122121221211212111211111111101000777676766766666666656670000002112212112121111111100776666566565565555545707700102112121122121221222333333434445555565565565565532322223223223233234454434444545455555655556555656556565656566656666667677777700");
+        numbers[24] = new String ("121111111111011110110101100707712111011011011223234454545454545455455455455455545555545554322222222222222222221010010001001001001010010122225455445454445445445444454322211124443444566666666545444544445444434667677000100001000107666666666666666666666654667700000");
+        numbers[25] = new String ("223232222121211121112111111111011111011010110100100100007776666656566565565655555670707070100101010010010010007070012222222322222223222222222211134344444456667666667666666766666665454545445454454454312121212121221221222232343232333444454454544545545455455545555545555555655556555656565666767777700");
+        numbers[26] = new String ("1000000100010001001001001010100101101010111011101111121212223233233467665666556554555545554545545454545445454454454445444445444444444443333222221211111111010110101010100100100007766566566565655656600211211212121212223233232344444544454454545454554554555555556566666676666766767770000000000");
+        numbers[27] = new String ("101011010101101010110101101011010110101101011010110101101011767666666667666566666565555455600010001001001122222222322222222222322222112223444444565545545545454554545454545545454545454545454545454545454544545445445444467770707000");
+        numbers[28] = new String ("10110111111112111121111211777770707000000100100110111111112112223233346766656555555455454544544444343332211111111110111101101000077700223323334344445455555555565555565555433323332333434344444544554555555565565656565666566666676707776777770000");
+        numbers[29] = new String ("222232212211211111101110110110101101010101010100101001001000100001000000070776766665655555555555455454545454454445434322221212121212112124555555555565656667676767660700000100100101010110101110111111112121222231223223232323434444445444454445445445445445454454545454545454554545545545545555555556656667676777600");
+        numbers[20] = new String ("22222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222244444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444446666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
 
         int minVal = 10000;
         int minIdx = 10;
@@ -368,7 +386,7 @@ public class ImageProcessor {
             }
         }
 
-        String result = new String(""+ minIdx);
+        String result = new String(""+ minIdx % 10);
         return result;
     }
 
@@ -379,34 +397,41 @@ public class ImageProcessor {
 
         if (pattern.length() > number.length()){
             factor  = pattern.length() / number.length();
-        } else {
-            factor = 1;
-        }
-//        System.out.println("Factor " + factor);
-        for (int i = 0; i < number.length(); i++){
-            String temp = new String (""+ number.charAt(i));
-//            System.out.println("Temp: " + temp);
-            for (int j = 0; j < factor ; j++){
-                sNumber += temp;
-//                System.out.println("Stretch Number: " + sNumber);
+            for (int i = 0; i < number.length(); i++){
+                String temp = new String (""+ number.charAt(i));
+                for (int j = 0; j < factor ; j++){
+                    sNumber += temp;
+                }
+
             }
+            value = editDistance(sNumber, pattern);
+        } else {
+            factor = number.length() / pattern.length();
+            for (int i = 0; i < pattern.length(); i++){
+                String temp = new String (""+ pattern.charAt(i));
+                for (int j = 0; j < factor ; j++){
+                    sNumber += temp;
+                }
 
+            }
+            value = editDistance(sNumber, number);
         }
 
-        System.out.println("Pattern: " + pattern);
-        System.out.println("Pattern length: " + pattern.length());
-        System.out.println("Number: " + number);
-        System.out.println("Number length: " + number.length());
+
+         System.out.println("Pattern: " + pattern);
+//        System.out.println("Pattern length: " + pattern.length());
+         //System.out.println("Number: " + number);
+//        System.out.println("Number length: " + number.length());
         System.out.println("Stretch Number: " + sNumber);
-        System.out.println("Stretch Number length: " + sNumber.length());
+//        System.out.println("Stretch Number length: " + sNumber.length());
 
 
-        value = editDistance(sNumber, pattern);
+
         System.out.println("Difference Value: " + value + "\n\n");
         return  value;
     }
 
-    public static int editDistance(String s1, String s2) {
+    /*public static int editDistance(String s1, String s2) {
         s1 = s1.toLowerCase();
         s2 = s2.toLowerCase();
 
@@ -431,6 +456,26 @@ public class ImageProcessor {
                 costs[s2.length()] = lastValue;
         }
         return costs[s2.length()];
+    }*/
+
+    public static int editDistance(String a, String b){
+        a = a.toLowerCase();
+        b = b.toLowerCase();
+        // i == 0
+        int [] costs = new int [b.length() + 1];
+        for (int j = 0; j < costs.length; j++)
+            costs[j] = j;
+        for (int i = 1; i <= a.length(); i++) {
+            // j == 0; nw = lev(i - 1, j)
+            costs[0] = i;
+            int nw = i - 1;
+            for (int j = 1; j <= b.length(); j++) {
+                int cj = Math.min(1 + Math.min(costs[j], costs[j - 1]), a.charAt(i - 1) == b.charAt(j - 1) ? nw : nw + 1);
+                nw = costs[j];
+                costs[j] = cj;
+            }
+        }
+        return costs[b.length()];
     }
 
     public String detectPattern(String pattern){
@@ -441,13 +486,13 @@ public class ImageProcessor {
         Point node = new Point(i, j);
         Queue<Point> Q = new ArrayDeque<Point>();
         Q.add(node);
+        current_image = current_image.copy(Bitmap.Config.ARGB_8888, true);
         while (Q.size() > 0){
             Point n = Q.poll();
             i = n.getX();
             j = n.getY();
             if(i < 0 || i >= current_image.getWidth() || j < 0 || j >= current_image.getHeight() || mark[i][j]){
                 // do nothing
-                // System.out.println("Do nothing on " + i + ',' + j);
             }
             else {
                 if (isBlack(current_image, n)) {
@@ -510,6 +555,93 @@ public class ImageProcessor {
         }
     }
 
+    public String getObject2(Bitmap image, Point pos, int lastPos){
+        String chaineCode = "";
+        Point curPos = new Point(pos);
+        Point initPoint = new Point(pos);
+
+        chaineCode = chaineCode + ""+getNextObejctPixel(image,curPos,lastPos);
+        if(getNextObejctPixel(image,curPos,lastPos) == 0){
+            curPos.setY(curPos.getY() - 1);
+            lastPos = getDirection(0);
+        }
+        else if(getNextObejctPixel(image,curPos,lastPos) == 1){
+            curPos.setX(curPos.getX() + 1);
+            curPos.setY(curPos.getY() - 1);
+            lastPos = getDirection(1);
+        }
+        else if(getNextObejctPixel(image,curPos,lastPos) == 2){
+            curPos.setX(curPos.getX() + 1);
+            lastPos = getDirection(2);
+        }
+        else if(getNextObejctPixel(image,curPos,lastPos) == 3){
+            curPos.setX(curPos.getX() + 1);
+            curPos.setY(curPos.getY() + 1);
+            lastPos = getDirection(3);
+        }
+        else if(getNextObejctPixel(image,curPos,lastPos) == 4){
+            curPos.setY(curPos.getY() + 1);
+            lastPos = getDirection(4);
+        }
+        else if(getNextObejctPixel(image,curPos,lastPos) == 5){
+            curPos.setX(curPos.getX() - 1);
+            curPos.setY(curPos.getY() + 1);
+            lastPos = getDirection(5);
+        }
+        else if(getNextObejctPixel(image,curPos,lastPos) == 6){
+            curPos.setX(curPos.getX() - 1);
+            lastPos = getDirection(6);
+        }
+        else{
+            curPos.setX(curPos.getX() - 1);
+            curPos.setY(curPos.getY() - 1);
+            lastPos = getDirection(7);
+        }
+
+        while(initPoint.getX() != curPos.getX() || initPoint.getY() != curPos.getY()){
+
+            chaineCode = chaineCode + ""+getNextObejctPixel(image,curPos,lastPos);
+            if(getNextObejctPixel(image,curPos,lastPos) == 0){
+                curPos.setY(curPos.getY() - 1);
+                lastPos = getDirection(0);
+            }
+            else if(getNextObejctPixel(image,curPos,lastPos) == 1){
+                curPos.setX(curPos.getX() + 1);
+                curPos.setY(curPos.getY() - 1);
+                lastPos = getDirection(1);
+            }
+            else if(getNextObejctPixel(image,curPos,lastPos) == 2){
+                curPos.setX(curPos.getX() + 1);
+                lastPos = getDirection(2);
+            }
+            else if(getNextObejctPixel(image,curPos,lastPos) == 3){
+                curPos.setX(curPos.getX() + 1);
+                curPos.setY(curPos.getY() + 1);
+                lastPos = getDirection(3);
+            }
+            else if(getNextObejctPixel(image,curPos,lastPos) == 4){
+                curPos.setY(curPos.getY() + 1);
+                lastPos = getDirection(4);
+            }
+            else if(getNextObejctPixel(image,curPos,lastPos) == 5){
+                curPos.setX(curPos.getX() - 1);
+                curPos.setY(curPos.getY() + 1);
+                lastPos = getDirection(5);
+            }
+            else if(getNextObejctPixel(image,curPos,lastPos) == 6){
+                curPos.setX(curPos.getX() - 1);
+                lastPos = getDirection(6);
+            }
+            else{
+                curPos.setX(curPos.getX() - 1);
+                curPos.setY(curPos.getY() - 1);
+                lastPos = getDirection(7);
+            }
+        }
+
+        return chaineCode;
+    }
+
     private int getNextObejctPixel(Bitmap image, Point pos, int lastPos){
         int initMove = (lastPos + 2) % 8;
         int height = image.getHeight();
@@ -566,6 +698,9 @@ public class ImageProcessor {
     }
 
     private Boolean isBlack(Bitmap image, Point pos){
+        if (pos.getX() > image.getWidth() || pos.getX() < 0 || pos.getY() > image.getHeight() || pos.getY() < 0){
+            return false;
+        }
         int p = image.getPixel(pos.getX(),pos.getY());
         int R = (p & 0xff0000) >> 16;
         int G = (p & 0x00ff00) >> 8;
@@ -576,6 +711,216 @@ public class ImageProcessor {
         else{
             return false;
         }
+    }
+
+
+    /* Stack Blur Algorithm by Mario Klingemann <mario@quasimondo.com> */
+    public Bitmap fastblur(Bitmap sentBitmap, float scale, int radius) {
+
+        int width = Math.round(sentBitmap.getWidth() * scale);
+        int height = Math.round(sentBitmap.getHeight() * scale);
+        sentBitmap = Bitmap.createScaledBitmap(sentBitmap, width, height, false);
+
+        Bitmap bitmap = sentBitmap.copy(sentBitmap.getConfig(), true);
+
+        if (radius < 1) {
+            return (null);
+        }
+
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+
+        int[] pix = new int[w * h];
+        Log.e("pix", w + " " + h + " " + pix.length);
+        bitmap.getPixels(pix, 0, w, 0, 0, w, h);
+
+        int wm = w - 1;
+        int hm = h - 1;
+        int wh = w * h;
+        int div = radius + radius + 1;
+
+        int r[] = new int[wh];
+        int g[] = new int[wh];
+        int b[] = new int[wh];
+        int rsum, gsum, bsum, x, y, i, p, yp, yi, yw;
+        int vmin[] = new int[Math.max(w, h)];
+
+        int divsum = (div + 1) >> 1;
+        divsum *= divsum;
+        int dv[] = new int[256 * divsum];
+        for (i = 0; i < 256 * divsum; i++) {
+            dv[i] = (i / divsum);
+        }
+
+        yw = yi = 0;
+
+        int[][] stack = new int[div][3];
+        int stackpointer;
+        int stackstart;
+        int[] sir;
+        int rbs;
+        int r1 = radius + 1;
+        int routsum, goutsum, boutsum;
+        int rinsum, ginsum, binsum;
+
+        for (y = 0; y < h; y++) {
+            rinsum = ginsum = binsum = routsum = goutsum = boutsum = rsum = gsum = bsum = 0;
+            for (i = -radius; i <= radius; i++) {
+                p = pix[yi + Math.min(wm, Math.max(i, 0))];
+                sir = stack[i + radius];
+                sir[0] = (p & 0xff0000) >> 16;
+                sir[1] = (p & 0x00ff00) >> 8;
+                sir[2] = (p & 0x0000ff);
+                rbs = r1 - Math.abs(i);
+                rsum += sir[0] * rbs;
+                gsum += sir[1] * rbs;
+                bsum += sir[2] * rbs;
+                if (i > 0) {
+                    rinsum += sir[0];
+                    ginsum += sir[1];
+                    binsum += sir[2];
+                } else {
+                    routsum += sir[0];
+                    goutsum += sir[1];
+                    boutsum += sir[2];
+                }
+            }
+            stackpointer = radius;
+
+            for (x = 0; x < w; x++) {
+
+                r[yi] = dv[rsum];
+                g[yi] = dv[gsum];
+                b[yi] = dv[bsum];
+
+                rsum -= routsum;
+                gsum -= goutsum;
+                bsum -= boutsum;
+
+                stackstart = stackpointer - radius + div;
+                sir = stack[stackstart % div];
+
+                routsum -= sir[0];
+                goutsum -= sir[1];
+                boutsum -= sir[2];
+
+                if (y == 0) {
+                    vmin[x] = Math.min(x + radius + 1, wm);
+                }
+                p = pix[yw + vmin[x]];
+
+                sir[0] = (p & 0xff0000) >> 16;
+                sir[1] = (p & 0x00ff00) >> 8;
+                sir[2] = (p & 0x0000ff);
+
+                rinsum += sir[0];
+                ginsum += sir[1];
+                binsum += sir[2];
+
+                rsum += rinsum;
+                gsum += ginsum;
+                bsum += binsum;
+
+                stackpointer = (stackpointer + 1) % div;
+                sir = stack[(stackpointer) % div];
+
+                routsum += sir[0];
+                goutsum += sir[1];
+                boutsum += sir[2];
+
+                rinsum -= sir[0];
+                ginsum -= sir[1];
+                binsum -= sir[2];
+
+                yi++;
+            }
+            yw += w;
+        }
+        for (x = 0; x < w; x++) {
+            rinsum = ginsum = binsum = routsum = goutsum = boutsum = rsum = gsum = bsum = 0;
+            yp = -radius * w;
+            for (i = -radius; i <= radius; i++) {
+                yi = Math.max(0, yp) + x;
+
+                sir = stack[i + radius];
+
+                sir[0] = r[yi];
+                sir[1] = g[yi];
+                sir[2] = b[yi];
+
+                rbs = r1 - Math.abs(i);
+
+                rsum += r[yi] * rbs;
+                gsum += g[yi] * rbs;
+                bsum += b[yi] * rbs;
+
+                if (i > 0) {
+                    rinsum += sir[0];
+                    ginsum += sir[1];
+                    binsum += sir[2];
+                } else {
+                    routsum += sir[0];
+                    goutsum += sir[1];
+                    boutsum += sir[2];
+                }
+
+                if (i < hm) {
+                    yp += w;
+                }
+            }
+            yi = x;
+            stackpointer = radius;
+            for (y = 0; y < h; y++) {
+                // Preserve alpha channel: ( 0xff000000 & pix[yi] )
+                pix[yi] = ( 0xff000000 & pix[yi] ) | ( dv[rsum] << 16 ) | ( dv[gsum] << 8 ) | dv[bsum];
+
+                rsum -= routsum;
+                gsum -= goutsum;
+                bsum -= boutsum;
+
+                stackstart = stackpointer - radius + div;
+                sir = stack[stackstart % div];
+
+                routsum -= sir[0];
+                goutsum -= sir[1];
+                boutsum -= sir[2];
+
+                if (x == 0) {
+                    vmin[y] = Math.min(y + r1, hm) * w;
+                }
+                p = x + vmin[y];
+
+                sir[0] = r[p];
+                sir[1] = g[p];
+                sir[2] = b[p];
+
+                rinsum += sir[0];
+                ginsum += sir[1];
+                binsum += sir[2];
+
+                rsum += rinsum;
+                gsum += ginsum;
+                bsum += binsum;
+
+                stackpointer = (stackpointer + 1) % div;
+                sir = stack[stackpointer];
+
+                routsum += sir[0];
+                goutsum += sir[1];
+                boutsum += sir[2];
+
+                rinsum -= sir[0];
+                ginsum -= sir[1];
+                binsum -= sir[2];
+
+                yi += w;
+            }
+        }
+
+        Log.e("pix", w + " " + h + " " + pix.length);
+        bitmap.setPixels(pix, 0, w, 0, 0, w, h);
+
+        return (bitmap);
     }
 
 }

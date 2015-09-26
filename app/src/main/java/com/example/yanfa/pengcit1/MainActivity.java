@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +21,8 @@ import android.widget.TextView;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -117,7 +120,6 @@ public class MainActivity extends ActionBarActivity {
             Bundle extras = data.getExtras();
             Bitmap tempBitmap = (Bitmap) extras.get("data");
             currentImageBitmap = ImageProcessor.toGrayscale(tempBitmap);
-            //System.out.println("pixelnya : " + currentImageBitmap.getPixel(0, 0));
             cameraView.setImageBitmap(tempBitmap);
             equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0,0));
             textViewTotalColor.setText("Jumlah Warna : " + ImageProcessor.countTotalColor(currentImageBitmap));
@@ -145,9 +147,21 @@ public class MainActivity extends ActionBarActivity {
                     }
             }
             cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-            // textViewTotalColor.setText("Digit : " + imageProcessor.detectPattern(imageProcessor.getChaineCodes(currentImageBitmap).get(0)));
-            equalizedView.setImageBitmap(imageProcessor.toGrayscale(currentImageBitmap, 0));
-            //System.out.println("Current: " + imageProcessor.getChaineCodes(currentImageBitmap).get(0));
+            //equalizedView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap, 0));
+            equalizedView.setImageBitmap(imageProcessor.fastblur(ImageProcessor.toGrayscale(currentImageBitmap, 0), new Float(1.0), 2));
+
+            // Versi khusus untuk plat karena ada perubahan warna
+            List<String> chainCode = imageProcessor.getChaineCodes(ImageProcessor.toGrayscale(currentImageBitmap, 0));
+
+            // Versi buat digit biasa untuk modeling
+            // List<String> chainCode = imageProcessor.getChaineCodes(currentImageBitmap);
+            List<String> digit = new ArrayList<String>();
+            for(int i = 0; i < chainCode.size(); i++){
+                if(chainCode.get(i).length() > 50){
+                    digit.add(imageProcessor.detectPattern(chainCode.get(i)));
+                }
+            }
+            textViewTotalColor.setText("Digit : " + digit);
         }
     }
 
