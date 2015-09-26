@@ -147,9 +147,7 @@ public class MainActivity extends ActionBarActivity {
                     }
             }
             cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-            //equalizedView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap, 0));
-            equalizedView.setImageBitmap(imageProcessor.fastblur(ImageProcessor.toGrayscale(currentImageBitmap, 0), new Float(1.0), 2));
-
+            equalizedView.setImageBitmap(imageProcessor.toGrayscale(currentImageBitmap, 0));
             // Versi khusus untuk plat karena ada perubahan warna
             List<String> chainCode = imageProcessor.getChaineCodes(ImageProcessor.toGrayscale(currentImageBitmap, 0));
 
