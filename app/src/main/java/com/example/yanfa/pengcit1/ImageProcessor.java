@@ -22,6 +22,11 @@ public class ImageProcessor {
 
     private Bitmap current_image;
     private boolean[][] mark;
+    private int MAX_CHAIN_CODE = 6; // max char detected for turn or not in chain code
+    private int MIN_DEGREE_FOR_TURN = 180; // min degree to estimate as a corner
+    private int KANAN = 1;
+    private int KIRI = 0;
+
 
     private static int[][] convertTo2DWithoutUsingGetRGB(Bitmap image) {
         int width = image.getWidth();
@@ -342,7 +347,7 @@ public class ImageProcessor {
         return chaineCodes;
     }
 
-    public String getNumber (String pattern){
+    public String getNumberChainCode (String pattern){
         String[] numbers = new String[30];
         numbers[1] = new String("22444444444444444444446600000000000000000000");
         numbers[2] = new String("10122222223344444444556556544444432222224446666666666600000000000111211100007654444666600000");
@@ -364,7 +369,7 @@ public class ImageProcessor {
         numbers[18] = new String ("10110111111112111121111211777770707000000100100110111111112112223233346766656555555455454544544444343332211111111110111101101000077700223323334344445455555555565555565555433323332333434344444544554555555565565656565666566666676707776777770000");
         numbers[19] = new String ("222232212211211111101110110110101101010101010100101001001000100001000000070776766665655555555555455454545454454445434322221212121212112124555555555565656667676767660700000100100101010110101110111111112121222231223223232323434444445444454445445445445445454454545454545454554545545545545555555556656667676777600");
         numbers[10] = new String ("1000010010010010101010110110111122232232222122222232434444444444454444454445444544544545454545555565666666676667676777670700000000");
-       numbers[21] = new String("21111111101110110110101211222323356555454545454544545444544544454444454444444344667676700000100001000100100010010100755555555556600");
+        numbers[21] = new String("21111111101110110110101211222323356555454545454544545444544544454444454444444344667676700000100001000100100010010100755555555556600");
         numbers[22] = new String("100122222222111211111111111101111011010010000007766666566566556556554543446777707001112112112121212212212223243321224344444444445454554555555555555565555556532223222223222322322322323344445467076766766676667666667666666666665545667700000");
         numbers[23] = new String("223322322222122122121221211212111211111111101000777676766766666666656670000002112212112121111111100776666566565565555545707700102112121122121221222333333434445555565565565565532322223223223233234454434444545455555655556555656556565656566656666667677777700");
         numbers[24] = new String ("121111111111011110110101100707712111011011011223234454545454545455455455455455545555545554322222222222222222221010010001001001001010010122225455445454445445445444454322211124443444566666666545444544445444434667677000100001000107666666666666666666666654667700000");
@@ -381,12 +386,57 @@ public class ImageProcessor {
         for (int i = 0; i < numbers.length; i++){
             int val = getDistance(pattern, numbers[i]);
             int idx = i;
+            //System.out.println("Turn Code " + i + " : " + getTurnCode(numbers[i]));
             if (minVal >  val){
                 minVal = val;
                 minIdx = i;
             }
         }
 
+        String result = new String(""+ minIdx % 10);
+        return result;
+    }
+
+    public String getNumberTurnCode (String pattern){
+        String[] numbers = new String[20];
+        numbers[0] = new String ("1111");
+        numbers[1] = new String("1111");
+        numbers[2] = new String("11100111000111");
+        numbers[3] = new String("11011110001000111");
+        numbers[4] = new String ("101001");
+        numbers[5] = new String ("1110001111100011");
+        numbers[6] = new String ("111001111");
+        numbers[7] = new String ("111011");
+        numbers[8] = new String ("11011101");
+        numbers[9] = new String ("1111100011");
+        numbers[10] = new String ("1111");
+        numbers[11] = new String("00100001101");
+        numbers[12] = new String("100000000011010110011");
+        numbers[13] = new String("000000000110000000110001001");
+        numbers[14] = new String ("00000011000001100001100010011");
+        numbers[15] = new String ("000000000001100101100000100001");
+        numbers[16] = new String ("0010000000000000000010");
+        numbers[17] = new String ("00000000000000110110000001");
+        numbers[18] = new String ("01000000000010010");
+        numbers[19] = new String ("0000000000000000010001001");
+
+
+        int minVal = 10000;
+        int minIdx = 10;
+        for (int i = 0; i < numbers.length; i++){
+//            System.out.println("Pattern: " + pattern);
+            int val = getDistance(pattern, numbers[i]);
+            int idx = i;
+            //System.out.println("Turn Code " + i + " : " + getTurnCode(numbers[i]));
+            //System.out.println("EditDistance for " + i + " : " + val);
+            if (minVal >  val){
+                minVal = val;
+                minIdx = i;
+            }
+        }
+        System.out.println("Pattern: " + pattern);
+        System.out.println("Matched Pattern: " + numbers[minIdx]);
+        System.out.println("Result: " + minIdx % 10);
         String result = new String(""+ minIdx % 10);
         return result;
     }
@@ -403,7 +453,6 @@ public class ImageProcessor {
                 for (int j = 0; j < factor ; j++){
                     sNumber += temp;
                 }
-
             }
             value = editDistance(sNumber, pattern);
         } else {
@@ -413,19 +462,18 @@ public class ImageProcessor {
                 for (int j = 0; j < factor ; j++){
                     sNumber += temp;
                 }
-
             }
             value = editDistance(sNumber, number);
         }
-        System.out.println("Pattern: " + pattern);
+//        System.out.println("Pattern: " + pattern);
 //        System.out.println("Pattern length: " + pattern.length());
 //        System.out.println("Number: " + number);
 //        System.out.println("Number length: " + number.length());
-//        System.out.println("Stretch Number: " + sNumber);
+//        System.out.println("Stretch: " + sNumber);
 //        System.out.println("Stretch Number length: " + sNumber.length());
 
 
-        value = editDistance(sNumber, pattern);
+//        value = editDistance(sNumber, pattern);
 //        System.out.println("Difference Value: " + value + "\n\n");
 
         return  value;
@@ -452,7 +500,13 @@ public class ImageProcessor {
     }
 
     public String detectPattern(String pattern){
-        return getNumber(pattern);
+        //return getNumberChainCode(pattern);
+        String patternTurn = getTurnCode(pattern);
+        if (patternTurn.length() > 0){
+            return getNumberTurnCode(patternTurn);
+        } else {
+            return "";
+        }
     }
 
     public void removeObject(int i, int j){
@@ -705,7 +759,7 @@ public class ImageProcessor {
 
                 int threshold = 30;
                 if (countTransition > threshold){
-                    System.out.println("Remove at: " + j + ',' + i);
+                    //System.out.println("Remove at: " + j + ',' + i);
                     copy = removeLine(j-threshold, i, copy);
                     countTransition = 0;
                 }
@@ -719,7 +773,7 @@ public class ImageProcessor {
 
     public Bitmap removeLine(int i, int j, Bitmap current_image){
         if(i < 0) i = 0;
-        System.out.println("value of i: " + i);
+        //System.out.println("value of i: " + i);
         while (current_image.getPixel(i, j) == Color.BLACK){
             current_image.setPixel(i, j, Color.WHITE);
             i += 1;
@@ -728,4 +782,79 @@ public class ImageProcessor {
         return current_image;
     }
 
+    public String getTurnCode(String chainCode){
+        String turnCode = "";
+        int i = 0;
+        while(i < chainCode.length()){
+            String tempCC = "";
+            for(int j = 0; j < MAX_CHAIN_CODE; j++){
+                if(((i+j) % chainCode.length()) < ((i+j+1) % chainCode.length())){
+                    tempCC = tempCC + chainCode.substring(((i+j) % chainCode.length()), ((i+j+1) % chainCode.length()));
+                }
+                else{
+                    tempCC = tempCC + chainCode.substring(chainCode.length() - 2, chainCode.length() - 1);
+                }
+            }
+            int tempTurn = getCorner(tempCC);
+            if(tempTurn != -1){
+                i += (MAX_CHAIN_CODE - 2);
+                turnCode = turnCode + tempTurn;
+            }
+            else{
+                i++;
+            }
+        }
+        return turnCode;
+    }
+
+    private int getCorner(String chainCode){
+        int corner = -1;
+        if(chainCode.length() != MAX_CHAIN_CODE){
+            return corner;
+        }
+
+        int tempDegree = 0;
+        for(int j = 0; j < MAX_CHAIN_CODE/2; j++){
+            int tempCurrCekCode = Integer.parseInt(chainCode.substring((j) % chainCode.length(), (j + 1) % chainCode.length()));
+            //System.out.println("" + (chainCode.substring((MAX_CHAIN_CODE-1-j) % chainCode.length())+ "," + (MAX_CHAIN_CODE-j) % chainCode.length()));
+            int tempCurrCekCode2;
+            if(((MAX_CHAIN_CODE-1-j) % chainCode.length()) < ((MAX_CHAIN_CODE-j) % chainCode.length())){
+                tempCurrCekCode2 = Integer.parseInt(chainCode.substring((MAX_CHAIN_CODE-1-j) % chainCode.length(),(MAX_CHAIN_CODE-j) % chainCode.length()));
+            }
+            else{
+                tempCurrCekCode2 = Integer.parseInt(chainCode.substring(chainCode.length() - 2, chainCode.length() - 1));
+            }
+            tempDegree += getDegree(tempCurrCekCode, tempCurrCekCode2);
+        }
+        if(tempDegree >= MIN_DEGREE_FOR_TURN){
+            corner = KANAN;
+            //System.out.println("kanan : " + chainCode);
+        }
+        else if(tempDegree <= (-1*MIN_DEGREE_FOR_TURN)){
+            corner = KIRI;
+            //System.out.println("kiri : " + chainCode);
+        }
+        return corner;
+    }
+
+    private int getDegree(int currentCC, int nextCC){
+        int degree = 45;
+        int pathFromPivotCC = (nextCC - currentCC);
+        //System.out.println("path from pivot" + pathFromPivotCC);
+        int cekFromPivot = pathFromPivotCC % 8;
+        //System.out.println("cek from pivot" + cekFromPivot);
+        int totalDiff = 0;
+        if(pathFromPivotCC < 0){
+            pathFromPivotCC += 8;
+        }
+        //System.out.println("path from pivot" + pathFromPivotCC);
+        if(pathFromPivotCC > 4){
+            totalDiff = ((pathFromPivotCC) % 4);
+            degree *= -1;
+        }
+        else{
+            totalDiff = pathFromPivotCC % 4;
+        }
+        return degree*totalDiff;
+    }
 }
