@@ -539,6 +539,16 @@ public class ImageProcessor {
     }
 
     public Bitmap removeObject(Bitmap bmpImage, int i, int j, boolean model){
+        int color_get, color_set;
+        if(model){
+            color_get = Color.WHITE;
+            color_set = Color.BLACK;
+        }
+        else{
+            color_get = Color.BLACK;
+            color_set = Color.WHITE;
+        }
+
         Point node = new Point(i, j);
         Queue<Point> Q = new ArrayDeque<Point>();
         Q.add(node);
@@ -552,8 +562,8 @@ public class ImageProcessor {
                 // do nothing
             }
             else {
-                if (bmpImage.getPixel(i, j) == Color.WHITE) {
-                    bmpImage.setPixel(i, j, Color.BLACK);
+                if (bmpImage.getPixel(i, j) == color_get) {
+                    bmpImage.setPixel(i, j, color_set);
                     mark[i][j] = true;
                     Q.add(new Point(i + 1, j));
                     Q.add(new Point(i - 1, j));
@@ -1170,7 +1180,7 @@ public class ImageProcessor {
                     start = true;
                 }
                 else if(!model && prev_color == Color.BLACK){
-                    start = false;
+                    start = true;
                 }
             }
             if(start) {
@@ -1257,12 +1267,12 @@ public class ImageProcessor {
         for(int i = 0; i < bmpImage.getWidth(); i++){
             for (int j = 0; j < bmpImage.getHeight(); j++){
                 if(bmpImage.getPixel(i, j) == Color.WHITE && model){
-                    bmpImage = removeObject(bmpImage, i, j, model);
                     gridDetection(bmpImage,model);
+                    bmpImage = removeObject(bmpImage, i, j, model);
                 }
                 else if (bmpImage.getPixel(i, j) == Color.BLACK && !model){
-                    bmpImage = removeObject(bmpImage, i, j, model);
                     gridDetection(bmpImage,model);
+                    bmpImage = removeObject(bmpImage, i, j, model);
                 }
             }
         }

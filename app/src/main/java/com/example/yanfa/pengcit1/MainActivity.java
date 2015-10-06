@@ -146,9 +146,6 @@ public class MainActivity extends ActionBarActivity {
                         e.printStackTrace();
                     }
             }
-            cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-            currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
-            equalizedView.setImageBitmap(currentImageBitmap);
 
             // Versi khusus untuk plat karena ada perubahan warna
             // currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0)
@@ -165,10 +162,13 @@ public class MainActivity extends ActionBarActivity {
 //            }
 //            textViewTotalColor.setText("Digit : " + digit);
 
-            textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, true));
-            equalizedView.setImageBitmap(imageProcessor.gridFullObject(currentImageBitmap, true));
-            // Draw a line to clarify
+            cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
+            currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
+            equalizedView.setImageBitmap(currentImageBitmap);
 
+            // False artinya untuk plat, True artinya untuk model
+            textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, false));
+            imageProcessor.gridFullObject(currentImageBitmap, false);
         }
     }
 
