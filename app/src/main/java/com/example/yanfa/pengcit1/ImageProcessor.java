@@ -538,6 +538,38 @@ public class ImageProcessor {
         }
     }
 
+    public Bitmap removeObject(Bitmap bmpImage, int i, int j, boolean model){
+        Point node = new Point(i, j);
+        Queue<Point> Q = new ArrayDeque<Point>();
+        Q.add(node);
+        bmpImage = bmpImage.copy(Bitmap.Config.ARGB_8888, true);
+        mark = new boolean[bmpImage.getWidth()][bmpImage.getHeight()];
+        while (Q.size() > 0){
+            Point n = Q.poll();
+            i = n.getX();
+            j = n.getY();
+            if(i < 0 || i >= bmpImage.getWidth() || j < 0 || j >= bmpImage.getHeight() || mark[i][j]){
+                // do nothing
+            }
+            else {
+                if (bmpImage.getPixel(i, j) == Color.WHITE) {
+                    bmpImage.setPixel(i, j, Color.BLACK);
+                    mark[i][j] = true;
+                    Q.add(new Point(i + 1, j));
+                    Q.add(new Point(i - 1, j));
+                    Q.add(new Point(i, j + 1));
+                    Q.add(new Point(i, j - 1));
+                    Q.add(new Point(i + 1, j + 1));
+                    Q.add(new Point(i - 1, j + 1));
+                    Q.add(new Point(i - 1, j - 1));
+                    Q.add(new Point(i + 1, j - 1));
+                }
+            }
+        }
+
+        return bmpImage;
+    }
+
     public Bitmap getCurrent_image(){
         return current_image;
     }
@@ -1086,7 +1118,9 @@ public class ImageProcessor {
         int x_left = bmpImage.getWidth();
         int x_right = i_start;
 
-        for (int i = i_start; i < bmpImage.getWidth(); i++){
+        int crop_width = getPointCrop(bmpImage, model);
+
+        for (int i = i_start; i < crop_width; i++){
             for (int j = j_start; j < bmpImage.getHeight(); j++){
                 if (bmpImage.getPixel(i, j) == colour_){
                     if(j > y_bottom){
@@ -1115,10 +1149,45 @@ public class ImageProcessor {
         return extremePoint;
     }
 
+    public int getPointCrop(Bitmap bmpImage, boolean model){
+        int transition;
+        int prev_color;
+        int current_color;
+
+        int i_crop = 0;
+        boolean start = false;
+        for(int i = 0; i < bmpImage.getWidth(); i++){
+            transition = 0;
+            prev_color = bmpImage.getPixel(i, 0);
+            for(int j = 1; j < bmpImage.getHeight(); j++){
+                current_color = bmpImage.getPixel(i, j);
+                if(prev_color != current_color){
+                    transition += 1;
+                }
+                prev_color = current_color;
+
+                if(model && prev_color == Color.WHITE){
+                    start = true;
+                }
+                else if(!model && prev_color == Color.BLACK){
+                    start = false;
+                }
+            }
+            if(start) {
+                if (transition > 0) {
+                    i_crop = i;
+                } else {
+                    return i_crop;
+                }
+            }
+        }
+        return  i_crop;
+    }
+
     /**
      *
      * @param bmpImage
-     * @param model if true then grid will be for Modelling and Color will be changed to White, else Black
+     * @param model if true then grid will be used for Modelling and Color will be changed to White, else Black
      * @return 5x5 integer of grid detection. 1 if the grid is filled
      */
     public int[][] gridDetection(Bitmap bmpImage, boolean model){
@@ -1159,7 +1228,6 @@ public class ImageProcessor {
             for(int j = extremeP.get(0); j < extremeP.get(1); j++){
                 if(count_height > height/(float)GRID_NUMBER){
                     if(GRID_NUMBER-1 > gridIterator_j){
-                        //System.out.println("i: " + i + " j: " + j);
                         gridIterator_j += 1;
                         count_height = 0;
                     }
@@ -1173,6 +1241,8 @@ public class ImageProcessor {
             count_width += 1;
         }
 
+        System.out.println("Width Image: " + bmpImage.getWidth());
+        System.out.println("Height Image: " + bmpImage.getHeight());
         for(int i = 0; i < GRID_NUMBER; i++){
             for(int j = 0; j < GRID_NUMBER; j++){
                 System.out.print(gridDetector[i][j] + " ");
@@ -1183,11 +1253,19 @@ public class ImageProcessor {
         return gridDetector;
     }
 
-    public void detectWithGrid(Bitmap bmpImage){
-        for (int i = 0; i < bmpImage.getWidth(); i++){
-            for(int j = 0; j < bmpImage.getHeight(); j++){
-
+    public Bitmap gridFullObject(Bitmap bmpImage, boolean model){
+        for(int i = 0; i < bmpImage.getWidth(); i++){
+            for (int j = 0; j < bmpImage.getHeight(); j++){
+                if(bmpImage.getPixel(i, j) == Color.WHITE && model){
+                    bmpImage = removeObject(bmpImage, i, j, model);
+                    gridDetection(bmpImage,model);
+                }
+                else if (bmpImage.getPixel(i, j) == Color.BLACK && !model){
+                    bmpImage = removeObject(bmpImage, i, j, model);
+                    gridDetection(bmpImage,model);
+                }
             }
         }
+        return bmpImage;
     }
 }

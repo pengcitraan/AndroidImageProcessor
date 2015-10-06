@@ -147,7 +147,8 @@ public class MainActivity extends ActionBarActivity {
                     }
             }
             cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-            equalizedView.setImageBitmap(imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0));
+            currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
+            equalizedView.setImageBitmap(currentImageBitmap);
 
             // Versi khusus untuk plat karena ada perubahan warna
             // currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0)
@@ -164,9 +165,8 @@ public class MainActivity extends ActionBarActivity {
 //            }
 //            textViewTotalColor.setText("Digit : " + digit);
 
-            currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
             textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, true));
-            imageProcessor.gridDetection(currentImageBitmap, true);
+            equalizedView.setImageBitmap(imageProcessor.gridFullObject(currentImageBitmap, true));
             // Draw a line to clarify
 
         }
