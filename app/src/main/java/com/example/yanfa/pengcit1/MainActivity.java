@@ -147,20 +147,28 @@ public class MainActivity extends ActionBarActivity {
                     }
             }
             cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-//            cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap, 0));
-            equalizedView.setImageBitmap(imageProcessor.removeNoise(imageProcessor.toGrayscale(currentImageBitmap, 0)));
+            equalizedView.setImageBitmap(imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0));
+
             // Versi khusus untuk plat karena ada perubahan warna
-            List<String> chainCode = imageProcessor.getChaineCodes(ImageProcessor.toGrayscale(currentImageBitmap, 0));
+            // currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0)
+            // List<String> chainCode = imageProcessor.getChaineCodes(ImageProcessor.toGrayscale(currentImageBitmap, 0));
+
+            // Versi buat digit biasa untuk modeling
+            // List<String> chainCode = imageProcessor.getChaineCodes(currentImageBitmap);
 //
-//            // Versi buat digit biasa untuk modeling
-//            List<String> chainCode = imageProcessor.getChaineCodes(currentImageBitmap);
-            List<String> digit = new ArrayList<String>();
-            for(int i = 0; i < chainCode.size(); i++){
-                if(chainCode.get(i).length() > 50){
-                    digit.add(imageProcessor.detectPattern(chainCode.get(i)));
-                }
-            }
-            textViewTotalColor.setText("Digit : " + digit);
+//            List<String> digit = new ArrayList<String>();
+//            for(int i = 0; i < chainCode.size(); i++){
+//                if(chainCode.get(i).length() > 50){
+//                    digit.add(imageProcessor.detectPattern(chainCode.get(i)));
+//                }
+//            }
+//            textViewTotalColor.setText("Digit : " + digit);
+
+            currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
+            textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, true));
+            imageProcessor.gridDetection(currentImageBitmap, true);
+            // Draw a line to clarify
+
         }
     }
 

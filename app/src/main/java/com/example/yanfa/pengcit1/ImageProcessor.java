@@ -500,13 +500,13 @@ public class ImageProcessor {
     }
 
     public String detectPattern(String pattern){
-        //return getNumberChainCode(pattern);
-        String patternTurn = getTurnCode(pattern);
-        if (patternTurn.length() > 0){
-            return getNumberTurnCode(patternTurn);
-        } else {
-            return "";
-        }
+        return getNumberChainCode(pattern);
+//        String patternTurn = getTurnCode(pattern);
+//        if (patternTurn.length() > 0){
+//            return getNumberTurnCode(patternTurn);
+//        } else {
+//            return "";
+//        }
     }
 
     public void removeObject(int i, int j){
@@ -740,6 +740,214 @@ public class ImageProcessor {
         }
     }
 
+    public Bitmap fastblur(Bitmap sentBitmap, float scale, int radius) {
+
+        int width = Math.round(sentBitmap.getWidth() * scale);
+        int height = Math.round(sentBitmap.getHeight() * scale);
+        sentBitmap = Bitmap.createScaledBitmap(sentBitmap, width, height, false);
+
+        Bitmap bitmap = sentBitmap.copy(sentBitmap.getConfig(), true);
+
+        if (radius < 1) {
+            return (null);
+        }
+
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+
+        int[] pix = new int[w * h];
+        Log.e("pix", w + " " + h + " " + pix.length);
+        bitmap.getPixels(pix, 0, w, 0, 0, w, h);
+
+        int wm = w - 1;
+        int hm = h - 1;
+        int wh = w * h;
+        int div = radius + radius + 1;
+
+        int r[] = new int[wh];
+        int g[] = new int[wh];
+        int b[] = new int[wh];
+        int rsum, gsum, bsum, x, y, i, p, yp, yi, yw;
+        int vmin[] = new int[Math.max(w, h)];
+
+        int divsum = (div + 1) >> 1;
+        divsum *= divsum;
+        int dv[] = new int[256 * divsum];
+        for (i = 0; i < 256 * divsum; i++) {
+            dv[i] = (i / divsum);
+        }
+
+        yw = yi = 0;
+
+        int[][] stack = new int[div][3];
+        int stackpointer;
+        int stackstart;
+        int[] sir;
+        int rbs;
+        int r1 = radius + 1;
+        int routsum, goutsum, boutsum;
+        int rinsum, ginsum, binsum;
+
+        for (y = 0; y < h; y++) {
+            rinsum = ginsum = binsum = routsum = goutsum = boutsum = rsum = gsum = bsum = 0;
+            for (i = -radius; i <= radius; i++) {
+                p = pix[yi + Math.min(wm, Math.max(i, 0))];
+                sir = stack[i + radius];
+                sir[0] = (p & 0xff0000) >> 16;
+                sir[1] = (p & 0x00ff00) >> 8;
+                sir[2] = (p & 0x0000ff);
+                rbs = r1 - Math.abs(i);
+                rsum += sir[0] * rbs;
+                gsum += sir[1] * rbs;
+                bsum += sir[2] * rbs;
+                if (i > 0) {
+                    rinsum += sir[0];
+                    ginsum += sir[1];
+                    binsum += sir[2];
+                } else {
+                    routsum += sir[0];
+                    goutsum += sir[1];
+                    boutsum += sir[2];
+                }
+            }
+            stackpointer = radius;
+
+            for (x = 0; x < w; x++) {
+
+                r[yi] = dv[rsum];
+                g[yi] = dv[gsum];
+                b[yi] = dv[bsum];
+
+                rsum -= routsum;
+                gsum -= goutsum;
+                bsum -= boutsum;
+
+                stackstart = stackpointer - radius + div;
+                sir = stack[stackstart % div];
+
+                routsum -= sir[0];
+                goutsum -= sir[1];
+                boutsum -= sir[2];
+
+                if (y == 0) {
+                    vmin[x] = Math.min(x + radius + 1, wm);
+                }
+                p = pix[yw + vmin[x]];
+
+                sir[0] = (p & 0xff0000) >> 16;
+                sir[1] = (p & 0x00ff00) >> 8;
+                sir[2] = (p & 0x0000ff);
+
+                rinsum += sir[0];
+                ginsum += sir[1];
+                binsum += sir[2];
+
+                rsum += rinsum;
+                gsum += ginsum;
+                bsum += binsum;
+
+                stackpointer = (stackpointer + 1) % div;
+                sir = stack[(stackpointer) % div];
+
+                routsum += sir[0];
+                goutsum += sir[1];
+                boutsum += sir[2];
+
+                rinsum -= sir[0];
+                ginsum -= sir[1];
+                binsum -= sir[2];
+
+                yi++;
+            }
+            yw += w;
+        }
+        for (x = 0; x < w; x++) {
+            rinsum = ginsum = binsum = routsum = goutsum = boutsum = rsum = gsum = bsum = 0;
+            yp = -radius * w;
+            for (i = -radius; i <= radius; i++) {
+                yi = Math.max(0, yp) + x;
+
+                sir = stack[i + radius];
+
+                sir[0] = r[yi];
+                sir[1] = g[yi];
+                sir[2] = b[yi];
+
+                rbs = r1 - Math.abs(i);
+
+                rsum += r[yi] * rbs;
+                gsum += g[yi] * rbs;
+                bsum += b[yi] * rbs;
+
+                if (i > 0) {
+                    rinsum += sir[0];
+                    ginsum += sir[1];
+                    binsum += sir[2];
+                } else {
+                    routsum += sir[0];
+                    goutsum += sir[1];
+                    boutsum += sir[2];
+                }
+
+                if (i < hm) {
+                    yp += w;
+                }
+            }
+            yi = x;
+            stackpointer = radius;
+            for (y = 0; y < h; y++) {
+                // Preserve alpha channel: ( 0xff000000 & pix[yi] )
+                pix[yi] = ( 0xff000000 & pix[yi] ) | ( dv[rsum] << 16 ) | ( dv[gsum] << 8 ) | dv[bsum];
+
+                rsum -= routsum;
+                gsum -= goutsum;
+                bsum -= boutsum;
+
+                stackstart = stackpointer - radius + div;
+                sir = stack[stackstart % div];
+
+                routsum -= sir[0];
+                goutsum -= sir[1];
+                boutsum -= sir[2];
+
+                if (x == 0) {
+                    vmin[y] = Math.min(y + r1, hm) * w;
+                }
+                p = x + vmin[y];
+
+                sir[0] = r[p];
+                sir[1] = g[p];
+                sir[2] = b[p];
+
+                rinsum += sir[0];
+                ginsum += sir[1];
+                binsum += sir[2];
+
+                rsum += rinsum;
+                gsum += ginsum;
+                bsum += binsum;
+
+                stackpointer = (stackpointer + 1) % div;
+                sir = stack[stackpointer];
+
+                routsum += sir[0];
+                goutsum += sir[1];
+                boutsum += sir[2];
+
+                rinsum -= sir[0];
+                ginsum -= sir[1];
+                binsum -= sir[2];
+
+                yi += w;
+            }
+        }
+
+        Log.e("pix", w + " " + h + " " + pix.length);
+        bitmap.setPixels(pix, 0, w, 0, 0, w, h);
+
+        return (bitmap);
+    }
+
     public Bitmap removeNoise(Bitmap bmpOriginal){
         Bitmap copy = bmpOriginal.copy(Bitmap.Config.ARGB_8888, true);
         boolean noTransition = false;
@@ -757,7 +965,7 @@ public class ImageProcessor {
                     countTransition = 0;
                 }
 
-                int threshold = 30;
+                int threshold = 4;
                 if (countTransition > threshold){
                     //System.out.println("Remove at: " + j + ',' + i);
                     copy = removeLine(j-threshold, i, copy);
@@ -856,5 +1064,130 @@ public class ImageProcessor {
             totalDiff = pathFromPivotCC % 4;
         }
         return degree*totalDiff;
+    }
+
+    /**
+     *
+     * @param bmpImage
+     * @return List of extreme Point: 0-> Y_Top ; 1-> Y_Bottom; 2-> X_Left; 3->X_Right
+     */
+    public List<Integer> getExtremePoints(Bitmap bmpImage, int i_start, int j_start, boolean model){
+
+        int colour_;
+        if(model){
+            colour_ = Color.WHITE;
+        }
+        else{
+            colour_ = Color.BLACK;
+        }
+
+        int y_top = bmpImage.getHeight();
+        int y_bottom = j_start;
+        int x_left = bmpImage.getWidth();
+        int x_right = i_start;
+
+        for (int i = i_start; i < bmpImage.getWidth(); i++){
+            for (int j = j_start; j < bmpImage.getHeight(); j++){
+                if (bmpImage.getPixel(i, j) == colour_){
+                    if(j > y_bottom){
+                        y_bottom = j;
+                    }
+                    if(j < y_top){
+                        y_top = j;
+                    }
+
+                    if(i > x_right){
+                        x_right = i;
+                    }
+                    if(i < x_left){
+                        x_left = i;
+                    }
+                }
+            }
+        }
+
+        ArrayList<Integer> extremePoint = new ArrayList<>();
+        extremePoint.add(0, y_top);
+        extremePoint.add(1, y_bottom);
+        extremePoint.add(2, x_left);
+        extremePoint.add(3, x_right);
+
+        return extremePoint;
+    }
+
+    /**
+     *
+     * @param bmpImage
+     * @param model if true then grid will be for Modelling and Color will be changed to White, else Black
+     * @return 5x5 integer of grid detection. 1 if the grid is filled
+     */
+    public int[][] gridDetection(Bitmap bmpImage, boolean model){
+
+        int colour_;
+        if(model){
+            colour_ = Color.WHITE;
+        }
+        else{
+            colour_ = Color.BLACK;
+        }
+
+//      Find the width & height of each block
+        List<Integer> extremeP = getExtremePoints(bmpImage, 1, 1, model);
+        int height = extremeP.get(1) - extremeP.get(0);
+        int width = extremeP.get(3) - extremeP.get(2);
+
+        int GRID_NUMBER = 15;
+
+        int[][] gridDetector = new int[GRID_NUMBER][GRID_NUMBER];
+        for (int i = 0; i < GRID_NUMBER; i++){
+            for (int j = 0; j < GRID_NUMBER; j++){
+                gridDetector[i][j] = 0;
+            }
+        }
+
+        int gridIterator_i = 0;
+        int gridIterator_j = 0;
+        int count_width = 0;
+        int count_height = 0;
+        for(int i = extremeP.get(2); i < extremeP.get(3); i++){
+            if(count_width > width/(float)GRID_NUMBER){
+                if(GRID_NUMBER-1 > gridIterator_i) {
+                    gridIterator_i += 1;
+                    count_width = 0;
+                }
+            }
+            for(int j = extremeP.get(0); j < extremeP.get(1); j++){
+                if(count_height > height/(float)GRID_NUMBER){
+                    if(GRID_NUMBER-1 > gridIterator_j){
+                        //System.out.println("i: " + i + " j: " + j);
+                        gridIterator_j += 1;
+                        count_height = 0;
+                    }
+                }
+                if(bmpImage.getPixel(i, j) == colour_){
+                    gridDetector[gridIterator_j][gridIterator_i] = 1;
+                }
+                count_height += 1;
+            }
+            gridIterator_j = 0;
+            count_width += 1;
+        }
+
+        for(int i = 0; i < GRID_NUMBER; i++){
+            for(int j = 0; j < GRID_NUMBER; j++){
+                System.out.print(gridDetector[i][j] + " ");
+            }
+            System.out.println();
+        }
+
+        return gridDetector;
+    }
+
+    public void detectWithGrid(Bitmap bmpImage){
+        for (int i = 0; i < bmpImage.getWidth(); i++){
+            for(int j = 0; j < bmpImage.getHeight(); j++){
+
+            }
+        }
     }
 }
