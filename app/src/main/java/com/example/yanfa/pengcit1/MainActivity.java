@@ -167,8 +167,13 @@ public class MainActivity extends ActionBarActivity {
             equalizedView.setImageBitmap(currentImageBitmap);
 
             // False artinya untuk plat, True artinya untuk model
-            textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, false));
-            imageProcessor.gridFullObject(currentImageBitmap, false);
+            ArrayList<String> grids = imageProcessor.gridFullObject(currentImageBitmap, true);
+
+            List<String> digit = new ArrayList<String>();
+            for(int i = 0; i < grids.size(); i++){
+                digit.add(imageProcessor.detectPattern(grids.get(i)));
+            }
+            textViewTotalColor.setText("Digit: " + digit);
         }
     }
 

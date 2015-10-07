@@ -443,6 +443,34 @@ public class ImageProcessor {
         return result;
     }
 
+    public String getNumberGrid (String pattern){
+        String[] numbers = new String[10];
+        numbers[0] = new String ("0011111000011111111011111111101110001110111000111011100011101110001110111001111001111111100011111100");
+        numbers[1] = new String("1111111110111111111000011111100000111110000011111000001111100000111110000011111000001111100000111110");
+        numbers[2] = new String("1111111110111111111101010111110000001111000001111100011111100111111100111111111111111111111111111111");
+        numbers[3] = new String("1111111000111111111011000111110101111111011111110001111111100000011111110000111111111111111111111100");
+        numbers[4] = new String ("0000011100000011110000011111000111111100111101110011111111101111111110111111111000000111000000011100");
+        numbers[5] = new String ("1111111110111111111011111111101111111000111111110001111111100000011110100011111011111111101111111100");
+        numbers[6] = new String ("0011111110011111111011111001001111111000111111111011111111101110001110111000111001111111100111111100");
+        numbers[7] = new String ("1111111111111111111111111111110000011110000011110000111110000011110000011110000011110000001111000000");
+        numbers[8] = new String ("0011111000111111111011110111101111111100011111110011111111101110011110111000111011111111100111111100");
+        numbers[9] = new String ("0111111000111111111011111111101110001110111011111011111111100111111110010001111011111111001111111100");
+
+
+        int minVal = 10000;
+        int minIdx = 10;
+        for (int i = 0; i < numbers.length; i++){
+            int val = getDistance(pattern, numbers[i]);
+            int idx = i;
+            if (minVal >  val){
+                minVal = val;
+                minIdx = i;
+            }
+        }
+        String result = new String("") + minIdx;
+        return result;
+    }
+
     public int getDistance (String pattern, String number){
         int factor;
         String sNumber = new String("");
@@ -502,13 +530,14 @@ public class ImageProcessor {
     }
 
     public String detectPattern(String pattern){
-        return getNumberChainCode(pattern);
+//        return getNumberChainCode(pattern);
 //        String patternTurn = getTurnCode(pattern);
 //        if (patternTurn.length() > 0){
 //            return getNumberTurnCode(patternTurn);
 //        } else {
 //            return "";
 //        }
+        return getNumberGrid(pattern);
     }
 
     public void removeObject(int i, int j){
@@ -1202,7 +1231,7 @@ public class ImageProcessor {
      * @param model if true then grid will be used for Modelling and Color will be changed to White, else Black
      * @return 5x5 integer of grid detection. 1 if the grid is filled
      */
-    public int[][] gridDetection(Bitmap bmpImage, boolean model){
+    public String gridDetection(Bitmap bmpImage, boolean model){
 
         int colour_;
         if(model){
@@ -1217,7 +1246,7 @@ public class ImageProcessor {
         int height = extremeP.get(1) - extremeP.get(0);
         int width = extremeP.get(3) - extremeP.get(2);
 
-        int GRID_NUMBER = 15;
+        int GRID_NUMBER = 10;
 
         int[][] gridDetector = new int[GRID_NUMBER][GRID_NUMBER];
         for (int i = 0; i < GRID_NUMBER; i++){
@@ -1255,29 +1284,34 @@ public class ImageProcessor {
 
         System.out.println("Width Image: " + bmpImage.getWidth());
         System.out.println("Height Image: " + bmpImage.getHeight());
+        String gridMatrix = "";
         for(int i = 0; i < GRID_NUMBER; i++){
             for(int j = 0; j < GRID_NUMBER; j++){
+                gridMatrix += gridDetector[i][j];
                 System.out.print(gridDetector[i][j] + " ");
             }
             System.out.println();
         }
 
-        return gridDetector;
+        System.out.println(gridMatrix);
+        return gridMatrix;
     }
 
-    public Bitmap gridFullObject(Bitmap bmpImage, boolean model){
+    public ArrayList<String> gridFullObject(Bitmap bmpImage, boolean model){
+
+        ArrayList<String> grids = new ArrayList<String>();
         for(int i = 0; i < bmpImage.getWidth(); i++){
             for (int j = 0; j < bmpImage.getHeight(); j++){
                 if(bmpImage.getPixel(i, j) == Color.WHITE && model){
-                    gridDetection(bmpImage,model);
+                    grids.add(gridDetection(bmpImage,model));
                     bmpImage = removeObject(bmpImage, i, j, model);
                 }
                 else if (bmpImage.getPixel(i, j) == Color.BLACK && !model){
-                    gridDetection(bmpImage,model);
+                    grids.add(gridDetection(bmpImage,model));
                     bmpImage = removeObject(bmpImage, i, j, model);
                 }
             }
         }
-        return bmpImage;
+        return grids;
     }
 }
