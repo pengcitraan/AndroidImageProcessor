@@ -73,10 +73,10 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if(pictureTaken) {
-                    System.out.println("masuk kok");
-                    int progressChange = (int) (seekBar.getProgress() * 1000000);
-                    int progressChange2 = (int) (seekBar2.getProgress() * 1000000);
-                    equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap, progressChange, progressChange2));
+                    //System.out.println("masuk kok");
+                    int progressChange = (int) (seekBar.getProgress() * 100);
+                    //int progressChange2 = (int) (seekBar2.getProgress() * 1000000);
+                    equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap, 0, progressChange));
                 }
             }
 

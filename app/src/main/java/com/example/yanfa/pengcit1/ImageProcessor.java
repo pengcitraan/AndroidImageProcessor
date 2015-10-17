@@ -191,9 +191,13 @@ public class ImageProcessor {
         int greenCuF[] = new int[256];
         int mapGreen[] = new int[256];
 
-        Bitmap greyscaleBitmap = bitmap;
+        int grayFreq[] = new int[256];
+        int grayCuF[] = new int[256];
+        int mapGray[] = new int[256];
 
-        int totalPixel = greyscaleBitmap.getHeight() + greyscaleBitmap.getWidth();
+        Bitmap greyscaleBitmap = toGrayscale(bitmap);
+
+        int totalPixel = greyscaleBitmap.getHeight() * greyscaleBitmap.getWidth();
 
         int width, height;
         height = greyscaleBitmap.getHeight();
@@ -206,7 +210,7 @@ public class ImageProcessor {
             feq[i] = totalPixel / 256;
         }
 
-        cuFeq[0] = feq[0];
+        cuFeq[0] = feq[0] ;
         for(int i = 1; i < 256; i++){
             cuFeq[i] = cuFeq[i-1] + feq[i];
         }
@@ -215,96 +219,42 @@ public class ImageProcessor {
             for(int j = 0; j < height; j++) {
                 int p = greyscaleBitmap.getPixel(i, j);
                 int R = (p & 0xff0000) >> 16;
-                redFreq[R]++;
+                int G = (p & 0x00ff00) >> 8;
+                int B = (p & 0x0000ff) >> 0;
+                double GRAY = (0.299 * R)  + (0.587 * G) + (0.114 * B);
+                int gray = (int) GRAY;
+//                System.out.println("Gray val : " + gray);
+                grayFreq[gray]++;
             }
         }
 
-        redCuF[0] = redFreq[0];
+        grayCuF[0] = grayFreq[0] + adjustCuf;
         for(int i = 1; i < 256; i++){
-            redCuF[i] = redCuF[i-1] + redFreq[i];
+            grayCuF[i] = grayCuF[i-1] + grayFreq[i];
         }
 
         for(int i = 0; i < 256; i++){
             int counter = 1;
-            int smallestDiff = Math.abs((redCuF[i] - cuFeq[0]));
+            int smallestDiff = Math.abs((cuFeq[0] - grayCuF[i]));
             while(counter < 256){
-                int tempDiff = Math.abs((redCuF[i] - cuFeq[counter]));
+                int tempDiff = Math.abs((cuFeq[counter] - grayCuF[i]));
                 if(smallestDiff > tempDiff){
                     smallestDiff = tempDiff;
                     counter++;
                 }
                 else {
                     counter--;
-                    System.out.println("counter : " + counter);
-                    System.out.println("redcuf : " + redCuF[i]);
-                    System.out.println("cuFeq : " + cuFeq[counter]);
-                    System.out.println("smallestDiff : " + smallestDiff);
-                    System.out.println("tempDiff : " + tempDiff);
+//                    System.out.println("counter : " + counter);
+//                    System.out.println("graycuf : " + grayCuF[counter]);
+//                    System.out.println("graycuf : " + grayCuF[counter+1]);
+//                    System.out.println("cuFeq : " + cuFeq[i]);
+//                    System.out.println("smallestDiff : " + smallestDiff);
+//                    System.out.println("tempDiff : " + tempDiff);
                     break;
                 }
             }
-            mapRed[i] = counter;
+            mapGray[i] = counter;
         }
-        /*
-        for(int i = 0; i < width; i++){
-            for(int j = 0; j < height; j++) {
-                int p = greyscaleBitmap.getPixel(i, j);
-                int B = (p & 0x0000ff) >> 0;
-                blueFreq[B]++;
-            }
-        }
-
-        blueCuF[0] = blueFreq[0];
-        for(int i = 1; i < 256; i++){
-            blueCuF[i] = blueCuF[i-1] + blueFreq[i];
-        }
-
-        for(int i = 0; i < 256; i++){
-            int counter = 1;
-            int smallestDiff = Math.abs((blueCuF[i] - cuFeq[0]));
-            while(counter < 256){
-                int tempDiff = Math.abs((blueCuF[i] - cuFeq[counter]));
-                if(smallestDiff > tempDiff){
-                    smallestDiff = tempDiff;
-                    counter++;
-                }
-                else if (smallestDiff <= tempDiff) {
-                    counter--;
-                    break;
-                }
-            }
-            mapBlue[i] = counter;
-        }
-
-        for(int i = 0; i < width; i++){
-            for(int j = 0; j < height; j++) {
-                int p = greyscaleBitmap.getPixel(i, j);
-                int G = (p & 0x00ff00) >> 8;
-                greenFreq[G]++;
-            }
-        }
-
-        greenCuF[0] = greenFreq[0];
-        for(int i = 1; i < 256; i++){
-            greenCuF[i] = greenCuF[i-1] + greenFreq[i];
-        }
-
-        for(int i = 0; i < 256; i++){
-            int counter = 1;
-            int smallestDiff = Math.abs((greenCuF[i] - cuFeq[0]));
-            while(counter < 256){
-                int tempDiff = Math.abs((greenCuF[i] - cuFeq[counter]));
-                if(smallestDiff > tempDiff){
-                    smallestDiff = tempDiff;
-                    counter++;
-                }
-                else if(smallestDiff <= tempDiff) {
-                    counter--;
-                    break;
-                }
-            }
-            mapGreen[i] = counter;
-        }*/
 
         for(int i = 0; i < width; i++){
             for(int j = 0; j < height; j++) {
@@ -312,7 +262,9 @@ public class ImageProcessor {
                 int R = (p & 0xff0000) >> 16;
                 int G = (p & 0x00ff00) >> 8;
                 int B = (p & 0x0000ff) >> 0;
-                tempBitmap.setPixel(i, j, Color.rgb(mapRed[R], G, B));
+                double GRAY = (0.299 * R)  + (0.587 * G) + (0.114 * B);
+                int gray = (int) GRAY;
+                tempBitmap.setPixel(i, j, Color.rgb(mapGray[gray], mapGray[gray], mapGray[gray]));
                 //System.out.println("R" + mapRed[R] + "G" + mapGreen[G] + "B" +mapBlue[B]);
             }
         }
