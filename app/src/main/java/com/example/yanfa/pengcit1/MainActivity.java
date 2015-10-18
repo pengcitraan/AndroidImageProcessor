@@ -74,9 +74,9 @@ public class MainActivity extends ActionBarActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if(pictureTaken) {
                     //System.out.println("masuk kok");
-                    int progressChange = (int) (seekBar.getProgress() * 100);
+                    int progressChange = (int) (seekBar.getProgress() * 2);
                     //int progressChange2 = (int) (seekBar2.getProgress() * 1000000);
-                    equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap, 0, progressChange));
+                    equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap, progressChange));
                 }
             }
 
@@ -120,8 +120,8 @@ public class MainActivity extends ActionBarActivity {
             Bundle extras = data.getExtras();
             Bitmap tempBitmap = (Bitmap) extras.get("data");
             currentImageBitmap = ImageProcessor.toGrayscale(tempBitmap);
-            cameraView.setImageBitmap(tempBitmap);
-            equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0,0));
+            cameraView.setImageBitmap(currentImageBitmap);
+            equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0));
             textViewTotalColor.setText("Jumlah Warna : " + ImageProcessor.countTotalColor(currentImageBitmap));
             pictureTaken = true;
         }

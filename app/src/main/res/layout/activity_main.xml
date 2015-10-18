@@ -71,7 +71,8 @@
                 android:layout_height="30dp"
                 android:id="@+id/pixelSeekBar"
                 android:layout_gravity="center"
-                />
+                android:indeterminate="false"
+                android:max="10"/>
 
             <Button
                 android:layout_width="match_parent"

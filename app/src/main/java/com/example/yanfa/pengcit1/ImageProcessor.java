@@ -176,24 +176,10 @@ public class ImageProcessor {
 
     public static Bitmap histogramEqualization(Bitmap bitmap, int adjustRed, int adjustCuf){
 
-        int feq[] = new int[256];
-        int cuFeq[] = new int[256];
-
-        int redFreq[] = new int[256];
-        int redCuF[] = new int[256];
-        int mapRed[] = new int[256];
-
-        int blueFreq[] = new int[256];
-        int blueCuF[] = new int[256];
-        int mapBlue[] = new int[256];
-
-        int greenFreq[] = new int[256];
-        int greenCuF[] = new int[256];
-        int mapGreen[] = new int[256];
-
         int grayFreq[] = new int[256];
-        int grayCuF[] = new int[256];
-        int mapGray[] = new int[256];
+        double grayProbFreq[] = new double[256];
+        double grayCuProbFreq[] = new double[256];
+        int grayValueNew[] = new int[256];
 
         Bitmap greyscaleBitmap = toGrayscale(bitmap);
 
@@ -204,16 +190,6 @@ public class ImageProcessor {
         width = greyscaleBitmap.getWidth();
 
         Bitmap tempBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Bitmap hisEqBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-        for(int i = 0; i < 256; i++){
-            feq[i] = totalPixel / 256;
-        }
-
-        cuFeq[0] = feq[0] ;
-        for(int i = 1; i < 256; i++){
-            cuFeq[i] = cuFeq[i-1] + feq[i];
-        }
 
         for(int i = 0; i < width; i++){
             for(int j = 0; j < height; j++) {
@@ -222,54 +198,128 @@ public class ImageProcessor {
                 int G = (p & 0x00ff00) >> 8;
                 int B = (p & 0x0000ff) >> 0;
                 double GRAY = (0.299 * R)  + (0.587 * G) + (0.114 * B);
-                int gray = (int) GRAY;
+                int grayValueOld = (int) GRAY;
 //                System.out.println("Gray val : " + gray);
-                grayFreq[gray]++;
+                grayFreq[grayValueOld]++;
             }
         }
-
-        grayCuF[0] = grayFreq[0] + adjustCuf;
-        for(int i = 1; i < 256; i++){
-            grayCuF[i] = grayCuF[i-1] + grayFreq[i];
-        }
+//        System.out.println("Total Pixel : " + width*height);
+//        int sumVal = 0;
+//        for(int i = 0; i < 256; i++){
+//            sumVal = sumVal + grayFreq[i];
+//        }
+//        System.out.println("Total Value : " + sumVal);
+        int GrayLevel = 255;
 
         for(int i = 0; i < 256; i++){
-            int counter = 1;
-            int smallestDiff = Math.abs((cuFeq[0] - grayCuF[i]));
-            while(counter < 256){
-                int tempDiff = Math.abs((cuFeq[counter] - grayCuF[i]));
-                if(smallestDiff > tempDiff){
-                    smallestDiff = tempDiff;
-                    counter++;
-                }
-                else {
-                    counter--;
-//                    System.out.println("counter : " + counter);
-//                    System.out.println("graycuf : " + grayCuF[counter]);
-//                    System.out.println("graycuf : " + grayCuF[counter+1]);
-//                    System.out.println("cuFeq : " + cuFeq[i]);
-//                    System.out.println("smallestDiff : " + smallestDiff);
-//                    System.out.println("tempDiff : " + tempDiff);
-                    break;
-                }
-            }
-            mapGray[i] = counter;
+            grayProbFreq[i] = (double)((grayFreq[i] + adjustCuf))  / totalPixel;
+//            System.out.println("Gray Value " + i + " Freq : "  + grayFreq[i]);
+//            System.out.println("Gray Value " + i + " Prob Freq : "  + grayProbFreq[i]);
         }
+
+        grayCuProbFreq[0] = grayProbFreq[0];
+        for(int i = 1; i < 256; i++){
+            grayCuProbFreq[i] = grayCuProbFreq[i-1] + grayProbFreq[i];
+//            System.out.println("Gray Value " + i + " Cum Prob Freq : "  + grayCuProbFreq[i]);
+        }
+
+
+        for(int i = 0; i < 256; i++){
+            int newValue = (int) (grayCuProbFreq[i] * GrayLevel);
+            if (newValue > 255){
+                grayValueNew[i] = 255;
+            } else {
+                grayValueNew[i] = newValue;
+            }
+//            grayValueNew[i] = (int) ((grayCuProbFreq[i] * GrayLevel) % 255);
+//            System.out.println("Gray Value Old:" + i + "\n Gray Value New : "  + grayValueNew[i]);
+        }
+
+        for(int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                int p = greyscaleBitmap.getPixel(i, j);
+                int R = (p & 0xff0000) >> 16;
+                int G = (p & 0x00ff00) >> 8;
+                int B = (p & 0x0000ff) >> 0;
+                double GRAY = (0.299 * R) + (0.587 * G) + (0.114 * B);
+                int grayValueOld = (int) GRAY;
+                tempBitmap.setPixel(i, j, Color.rgb(grayValueNew[grayValueOld], grayValueNew[grayValueOld], grayValueNew[grayValueOld]));
+            }
+        }
+
+        return tempBitmap;
+    }
+
+    public static Bitmap histogramEqualization(Bitmap bitmap, int adjust){
+        System.out.println("masuk coy");
+        int grayFreq[] = new int[256];
+        double grayProbFreq[] = new double[256];
+        double grayCuProbFreq[] = new double[256];
+        int grayValueNew;
+
+        Bitmap greyscaleBitmap = toGrayscale(bitmap);
+
+        int totalPixel = greyscaleBitmap.getHeight() * greyscaleBitmap.getWidth();
+
+        int width, height;
+        height = greyscaleBitmap.getHeight();
+        width = greyscaleBitmap.getWidth();
+
+        Bitmap tempBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
         for(int i = 0; i < width; i++){
             for(int j = 0; j < height; j++) {
-                int p = greyscaleBitmap.getPixel(i,j);
+                int p = greyscaleBitmap.getPixel(i, j);
                 int R = (p & 0xff0000) >> 16;
                 int G = (p & 0x00ff00) >> 8;
                 int B = (p & 0x0000ff) >> 0;
                 double GRAY = (0.299 * R)  + (0.587 * G) + (0.114 * B);
-                int gray = (int) GRAY;
-                tempBitmap.setPixel(i, j, Color.rgb(mapGray[gray], mapGray[gray], mapGray[gray]));
-                //System.out.println("R" + mapRed[R] + "G" + mapGreen[G] + "B" +mapBlue[B]);
+                int grayValueOld = (int) GRAY;
+//                System.out.println("Gray val : " + gray);
+                grayFreq[grayValueOld]++;
+            }
+        }
+        double lowerLimit = 0;
+        double upperLimit = 255;
+        double smallestVal = 0;
+        double biggestVal = 255;
+
+        int sumFreq = 0;
+        for (int i = 0; i < 256; i++){
+            sumFreq = sumFreq + grayFreq[i];
+            if (sumFreq > (double)totalPixel * (0.05 + (adjust * 0.01))){
+                smallestVal = i-1;
+                break;
             }
         }
 
-        hisEqBitmap = toGrayscale(tempBitmap);
+        sumFreq = totalPixel;
+        for (int i = 255; i >= 0; i--){
+            sumFreq = sumFreq - grayFreq[i];
+            if (sumFreq < (double)totalPixel * (0.95 - (adjust * 0.01))){
+                biggestVal = i+1;
+                break;
+            }
+        }
+        System.out.println("smallestVal: " + smallestVal +  "\nbiggestVal: " + biggestVal);
+
+        for(int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                int p = greyscaleBitmap.getPixel(i, j);
+                int R = (p & 0xff0000) >> 16;
+                int G = (p & 0x00ff00) >> 8;
+                int B = (p & 0x0000ff) >> 0;
+                double GRAY = (0.299 * R) + (0.587 * G) + (0.114 * B);
+                int grayValueOld = (int) GRAY;
+                grayValueNew =(int) (((double)grayValueOld - smallestVal) * ((upperLimit - lowerLimit) / (biggestVal - smallestVal)) + lowerLimit);
+                if (grayValueNew > 255){
+                    grayValueNew = 255;
+                } else if (grayValueNew < 0){
+                    grayValueNew = 0;
+                }
+                tempBitmap.setPixel(i, j, Color.rgb(grayValueNew, grayValueNew, grayValueNew));
+            }
+        }
 
         return tempBitmap;
     }
