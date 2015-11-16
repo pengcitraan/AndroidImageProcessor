@@ -121,7 +121,7 @@ public class MainActivity extends ActionBarActivity {
             Bitmap tempBitmap = (Bitmap) extras.get("data");
             currentImageBitmap = ImageProcessor.toGrayscale(tempBitmap);
             cameraView.setImageBitmap(currentImageBitmap);
-            equalizedView.setImageBitmap(ImageProcessor.histogramEqualization(currentImageBitmap,0));
+            equalizedView.setImageBitmap(ImageProcessor.edgeHomogen(currentImageBitmap));
             textViewTotalColor.setText("Jumlah Warna : " + ImageProcessor.countTotalColor(currentImageBitmap));
             pictureTaken = true;
         }
@@ -163,12 +163,13 @@ public class MainActivity extends ActionBarActivity {
 //            textViewTotalColor.setText("Digit : " + digit);
 
             cameraView.setImageBitmap(ImageProcessor.toGrayscale(currentImageBitmap));
-            currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
-            equalizedView.setImageBitmap(currentImageBitmap);
+            //currentImageBitmap = imageProcessor.toGrayscale(imageProcessor.fastblur(imageProcessor.toGrayscale(currentImageBitmap), (float) 0.5, 1), 0);
+            equalizedView.setImageBitmap(ImageProcessor.clusterFace(ImageProcessor.toGrayscale(ImageProcessor.twoDegree(currentImageBitmap, 1), new Float(0.4))));
+            // equalizedView.setImageBitmap(ImageProcessor.twoDegree(currentImageBitmap, 1));
 
             // False artinya untuk plat, True artinya untuk model
-            textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, false));
-            imageProcessor.gridFullObject(currentImageBitmap, false);
+            //textViewTotalColor.setText("Point: " + imageProcessor.getExtremePoints(currentImageBitmap, 0, 0, false));
+            //imageProcessor.gridFullObject(currentImageBitmap, false);
         }
     }
 

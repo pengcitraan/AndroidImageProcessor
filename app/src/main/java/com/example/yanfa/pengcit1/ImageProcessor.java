@@ -8,6 +8,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.util.Log;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,7 +110,7 @@ public class ImageProcessor {
         paint.setColorFilter(f);
         c.drawBitmap(bmpOriginal, 0, 0, paint);
 
-        threshold = ImageProcessor.otsuThresholder(toGrayscale(bmpOriginal)) / new Float(256) ;//- new Float(0.2);
+        threshold += ImageProcessor.otsuThresholder(toGrayscale(bmpOriginal)) / new Float(256) ;//- new Float(0.2)
         System.out.println("Threshold: " + threshold);
         for (int i = 0; i < bmpGrayscale.getWidth(); i++) {
             for (int j = 0; j < bmpGrayscale.getHeight(); j++) {
@@ -1278,6 +1279,272 @@ public class ImageProcessor {
                 }
             }
         }
+        return bmpImage;
+    }
+
+    public static int getGrayVal(Bitmap greyscaleImage, int x, int y){
+        int p = greyscaleImage.getPixel(x, y);
+        int R = (p & 0xff0000) >> 16;
+        int G = (p & 0x00ff00) >> 8;
+        int B = (p & 0x0000ff) >> 0;
+        double GRAY = (0.299 * R)  + (0.587 * G) + (0.114 * B);
+        return (int) GRAY;
+    }
+
+    public static Bitmap edgeHomogen(Bitmap bmpImage){
+        System.out.println("Edge Homogen");
+        Bitmap grayBitmap = toGrayscale(bmpImage);
+        int width, height;
+        height = grayBitmap.getHeight();
+        width = grayBitmap.getWidth();
+        Bitmap tempBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+
+
+        for (int i = 1; i < width-1; i++){
+            for (int j = 1; j < height-1; j++){
+                int grayValue = getGrayVal(grayBitmap, i, j);
+                //System.out.println("Pixel Center: (" + i + " , " + j +")");
+                //System.out.println("Old Gray Value: " + grayValue);
+                int maxDiff = 0;
+                for (int k = i-1; k < i+2; k ++){
+                    for (int l = j-1; l < j+2 ; l++){
+                        int grayValueN = getGrayVal(grayBitmap, k, l);
+                        //System.out.println("Pixel Neighbor: (" + k + " , " + l +")");
+                        //System.out.println("Neighbor Value: " + grayValueN);
+                        int diff = Math.abs(grayValue - grayValueN);
+                        if (diff > maxDiff){
+                            maxDiff = diff;
+                        }
+                    }
+                }
+                //System.out.println("New Gray Value: " + Color.rgb(maxDiff, maxDiff, maxDiff));
+                tempBitmap.setPixel(i, j, Color.rgb(maxDiff, maxDiff, maxDiff));
+            }
+        }
+        return tempBitmap;
+    }
+
+    public static Bitmap edgeDifference(Bitmap bmpImage){
+        System.out.println("Edge Difference");
+        Bitmap grayBitmap = toGrayscale(bmpImage);
+        int width, height;
+        height = grayBitmap.getHeight();
+        width = grayBitmap.getWidth();
+        Bitmap tempBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        for (int i = 1; i < width-1; i++){
+            for (int j = 1; j < height-1; j++){
+                int maxDiff = 0;
+                //Kiri atas kanan bawah
+                int upLeft = getGrayVal(grayBitmap, i - 1, j - 1);
+                int botRight = getGrayVal(grayBitmap, i + 1, j + 1);
+                // atas bawah
+                int upMid = getGrayVal(grayBitmap, i - 1, j);
+                int botMid = getGrayVal(grayBitmap, i + 1, j);
+                // kanan atas kiri bawah
+                int upRight = getGrayVal(grayBitmap, i - 1, j + 1);
+                int botLeft = getGrayVal(grayBitmap, i + 1, j - 1);
+                //kiri kanan
+                int midLeft = getGrayVal(grayBitmap, i, j - 1);
+                int midRight = getGrayVal(grayBitmap, i, j + 1);
+
+                int diff = Math.abs(upLeft - botRight);
+                if (diff > maxDiff) {
+                    maxDiff = diff;
+                }
+                diff = Math.abs(upMid - botMid);
+                if (diff > maxDiff) {
+                    maxDiff = diff;
+                }
+                diff = Math.abs(upRight - botLeft);
+                if (diff > maxDiff) {
+                    maxDiff = diff;
+                }
+                diff = Math.abs(midLeft - midRight);
+                if (diff > maxDiff) {
+                    maxDiff = diff;
+                }
+                //System.out.println("New Gray Value: " + Color.rgb(maxDiff, maxDiff, maxDiff));
+                tempBitmap.setPixel(i, j, Color.rgb(maxDiff, maxDiff, maxDiff));
+
+            }
+        }
+        return tempBitmap;
+    }
+
+    public static Bitmap oneDegree (Bitmap bmpImage, int choice){
+        int[][] position = {{-1, -1}, {-1, 0,}, {-1, 1}, {0, -1},{0, 0}, {0, 1}, {1, -1},{1 , 0},{1, 1}};
+        int[] maskPrewittV = {1,0,-1,1,0,-1,1,0,-1};
+        int[] maskPrewittH = {1,1,1,0,0,0,-1,-1,-1};
+        int[] maskSobelV = {1,0,-1,2,0,-2,1,0,-1};
+        int[] maskSobelH = {1,2,1,0,0,0,-1,-2,-1};
+        int[] maskFreiChenV = {1,0,-1, (int) Math.sqrt(2), 0 , (int) (Math.sqrt(2) * -1), 1, 0, -1 };
+        int[] maskFreiChenH = {1, (int) Math.sqrt(2), 1, 0,0,0,-1, (int) (Math.sqrt(2) * -1), -1};
+        int[] maskV;
+        int[] maskH;
+        switch (choice){
+            case 0:
+                maskV = maskPrewittV;
+                maskH = maskPrewittH;
+                break;
+            case 1:
+                maskV = maskSobelV;
+                maskH = maskSobelH;
+                break;
+            case 2:
+                maskV = maskFreiChenV;
+                maskH = maskFreiChenH;
+                break;
+            default:
+                maskV = maskPrewittV;
+                maskH = maskPrewittH;
+                break;
+        }
+        Bitmap grayBitmap = toGrayscale(bmpImage);
+        int width, height;
+        height = grayBitmap.getHeight();
+        width = grayBitmap.getWidth();
+        Bitmap tempBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        for (int i = 1; i < width-1; i++){
+            for (int j = 1; j < height-1; j++){
+                int hValueSum = 0;
+                int vValueSum = 0;
+                for (int k = 0; k < position.length; k ++){
+                    int posH = j + position[k][0];
+                    int posV = i + position[k][1];
+                    int pixValue = getGrayVal(grayBitmap, posV, posH);
+                    int factorH = maskH[k];
+                    int newGrayValH = factorH * pixValue;
+                    int factorV = maskV[k];
+                    int newGrayValV = factorV * pixValue;
+
+                    hValueSum = hValueSum + newGrayValH;
+                    vValueSum = vValueSum + newGrayValV;
+                }
+                int val = (int) Math.sqrt((hValueSum*hValueSum) + (vValueSum * vValueSum));
+//                if (hValueSum >= vValueSum){
+//                    val = hValueSum;
+//                } else {
+//                    val = vValueSum;
+//                }
+                if (val > 255){
+                    val = 255;
+                }
+                if (val < 0 ){
+                    val = 0;
+                }
+                tempBitmap.setPixel(i,j, Color.rgb(val,val,val));
+            }
+        }
+        return tempBitmap;
+    }
+    public static Bitmap twoDegree (Bitmap bmpImage, int choice){
+        int[][] position = {{-1, -1}, {-1, 0,}, {-1, 1}, {0, -1},{0, 0}, {0, 1}, {1, -1},{1 , 0},{1, 1}};
+        int[] maskRobinsonN = {-1,0,1,-2,0,2,-1,0,1};
+        int[] maskRobinsonNE = {-2,-1,0,-1,0,1,0,1,2};
+        int[] maskRobinsonE = {-1,-2,-1,0,0,0,1,2,1};
+        int[] maskRobinsonSE = {0,-1,-2,1,0,-1,2,1,0};
+        int[] maskRobinsonS = {1,0,-1,2,0,-2,1,0,-1};
+        int[] maskRobinsonSW = {2,1,0,1,0,-1,0,-1,-2};
+        int[] maskRobinsonW = {1,2,1,0,0,0,-1,-2,-1};
+        int[] maskRobinsonNW = {0,1,2,-1,0,1,-2,-1,0};
+        int[][] maskRobinson = {maskRobinsonN, maskRobinsonNE, maskRobinsonE, maskRobinsonSE, maskRobinsonS, maskRobinsonSW, maskRobinsonW, maskRobinsonNW};
+
+        int[] maskKirschN = {-3,-3,5,-3,0,5,-3,-3,5};
+        int[] maskKirschNE = {-3,-3,-3,-3,0,5,-3,5,5};
+        int[] maskKirschE = {-3,-3,-3,-3,0,-3,5,5,5};
+        int[] maskKirschSE = {-3,-3,-3,5,0,-3,5,5,-3};
+        int[] maskKirschS = {5,-3,-33,5,0,-3,5,-3,-3};
+        int[] maskKirschSW = {5,5,-3,5,0,-3,-3,-3,-3};
+        int[] maskKirschW = {5,5,5,-3,0,-3,-3,-3,-3};
+        int[] maskKirschNW = {-3,5,5,-3,0,5,-3,-3,-3};
+        int[][] maskKirsch = {maskKirschN, maskKirschNE, maskKirschE, maskKirschSE, maskKirschS, maskKirschSW,maskKirschW,maskKirschNW};
+        int[][] mask;
+        switch (choice){
+            case 0:
+                mask = maskRobinson;
+                break;
+            case 1:
+                mask = maskKirsch;
+            default:
+                mask = maskRobinson;
+                break;
+        }
+
+        Bitmap grayBitmap = toGrayscale(bmpImage);
+        int width, height;
+        height = grayBitmap.getHeight();
+        width = grayBitmap.getWidth();
+        Bitmap tempBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        for (int i = 1; i < width-1; i++){
+            for (int j = 1; j < height-1; j++){
+                int[] valueSum = {0,0,0,0,0,0,0,0};
+                for (int k = 0; k < position.length; k ++){
+                    int posH = j + position[k][0];
+                    int posV = i + position[k][1];
+                    int pixValue = getGrayVal(grayBitmap, posV, posH);
+                    int[] factor = new int[8];
+                    for (int l = 0; l < mask.length; l++){
+                        factor[l] = mask[l][k];
+                    }
+                    int[] newGrayVal = new int[8];
+                    for (int l = 0; l < factor.length; l++){
+                        newGrayVal[l] = factor[l] * pixValue;
+                    }
+                    for (int l =0; l < newGrayVal.length; l++){
+                        valueSum[l] = valueSum[l] + newGrayVal[l];
+                    }
+                }
+                int val = 0;
+                for (int k = 0; k < valueSum.length; k++){
+                    if (valueSum[k] > val){
+                        val = valueSum[k];
+                    }
+                }
+                if (val > 255){
+                    val = 255;
+                }
+                if (val < 0 ){
+                    val = 0;
+                }
+                tempBitmap.setPixel(i,j, Color.rgb(val,val,val));
+            }
+        }
+
+
+        return tempBitmap;
+    }
+
+    public static Bitmap clusterFace(Bitmap bmpImage){
+        Point[] facePixels;
+        ArrayList<Point> face = new ArrayList<>();
+        for(int i = 0; i < bmpImage.getWidth(); i++){
+            for(int j = 0; j < bmpImage.getHeight(); j++){
+                if(bmpImage.getPixel(i,j) == Color.BLACK){
+                    face.add(new Point(i, j));
+                }
+            }
+        }
+        facePixels = new Point[face.size()];
+        for(int i = 0; i < face.size(); i++){
+            facePixels[i] = face.get(i);
+        }
+
+        Kmeans clusterer = new Kmeans(facePixels, 4, 100);
+        clusterer.categorizePixels();
+
+        ArrayList<ArrayList<Point>> clusteredPixels = new ArrayList<>();
+        clusteredPixels = clusterer.getCategorizedPixels();
+
+        int color[] = {Color.RED,  Color.BLUE, Color.GREEN, Color.MAGENTA};
+        for(int i = 0; i < 4; i++){
+            for(int index = 0; index < clusteredPixels.get(i).size(); index++){
+                bmpImage.setPixel(clusteredPixels.get(i).get(index).getX(), clusteredPixels.get(i).get(index).getY(), color[i]);
+            }
+        }
+
         return bmpImage;
     }
 }
